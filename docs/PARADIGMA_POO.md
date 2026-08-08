@@ -80,9 +80,12 @@ class RepositorioProductoMariaDB implements IRepositorioProducto { … }
 - **Constructor promotion + `readonly`** (PHP 8): el constructor declara,
   asigna y protege las dependencias en una sola línea:
   `private readonly IRepositorioProducto $repositorio`.
-- **La frontera de entrada se construye a mano**: `ValidadorProducto` hace lo
-  que en otros stacks hace una librería — y construirla enseña qué ES validar
-  (tipos, rangos, obligatoriedad, lista blanca de columnas).
+- **El modelo es el dato como objeto**: la clase `Producto` con sus 4
+  propiedades tipadas — un `stock` que SIEMPRE es entero.
+- **La frontera de entrada se construye a mano**: la validación del body
+  vive en el controlador (la puerta HTTP) y hace lo que en otros stacks hace
+  una librería — construirla enseña qué ES validar (tipos, rangos,
+  obligatoriedad, lista blanca de columnas).
 
 ## 4. Justificación: por qué P.O.O. para este proyecto
 
@@ -101,8 +104,8 @@ class RepositorioProductoMariaDB implements IRepositorioProducto { … }
 ## 5. Ejemplo resumido: la v1 vista con lentes de P.O.O.
 
 ```
-ValidadorProducto            ← la frontera de entrada (métodos estáticos, sin estado)
-ControladorProducto          ← objeto HTTP; compone un IServicioProducto
+Producto (el modelo)         ← la clase entidad: el dato con tipos
+ControladorProducto          ← objeto HTTP; valida el body y compone un IServicioProducto
 ServicioProducto             ← objeto de NEGOCIO; compone un IRepositorioProducto
 IRepositorioProducto         ← contrato (interface): abstracción pura
 RepositorioProductoMariaDB   ← implementación concreta (encapsula PDO y SQL)

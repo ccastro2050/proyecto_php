@@ -7,18 +7,31 @@
  * SOLO este archivo se convertirá en la fábrica real — controladores y
  * servicios no se tocarán: ese será el examen del principio abierto/cerrado.
  */
+
+// Modo estricto de tipos (ver explicación completa en index.php):
 declare(strict_types=1);
 
 require_once __DIR__ . '/ServicioProducto.php';
 require_once __DIR__ . '/../repositorios/RepositorioProductoMariaDB.php';
 
+// Fíjese en el tipo de retorno: promete LA INTERFAZ (IServicioProducto),
+// no la clase concreta. Quien la llame (index.php) no sabrá qué hay dentro.
 function crearServicioProducto(): IServicioProducto
 {
-    // La configuración llega por variables de entorno (el compose las inyecta):
+    // Aquí — y SOLO aquí — se hace `new` de clases concretas.
+    // La configuración llega por variables de entorno:
+    //   getenv('X')  → lee la variable X del entorno (el compose las inyecta)
+    //   ?:           → "si vino vacía o no existe, usa este valor por defecto"
+    // Los defaults apuntan a localhost:13326 = el puerto PUBLICADO de la BD,
+    // para poder correr la API sin Docker mientras la BD sí está en Docker.
+    // Los argumentos con nombre (dsn:, usuario:, clave:) dicen qué es cada cosa.
     $repositorio = new RepositorioProductoMariaDB(
         dsn:     getenv('DB_DSN')     ?: 'mysql:host=localhost;port=13326;dbname=bdfacturas_mariadb_local',
         usuario: getenv('DB_USUARIO') ?: 'paradigmas',
         clave:   getenv('DB_CLAVE')   ?: 'paradigmas123',
     );
+
+    // Se ARMA la cadena de capas: el servicio recibe el repositorio ya
+    // construido (inyección de dependencias hecha a mano, sin frameworks):
     return new ServicioProducto($repositorio);
 }

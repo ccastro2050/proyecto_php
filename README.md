@@ -1,4 +1,4 @@
-﻿# Proyecto PHP — construcción por versiones
+# Proyecto PHP — construcción por versiones
 
 Proyecto de curso (ITM). Aquí NO se descarga un sistema terminado:
 **se construye un sistema real por versiones en PHP puro**, guiado por
@@ -46,8 +46,9 @@ Pruebe la joya didáctica de la v1: PUT con solo `{"stock": 99}` → 422; el
 mismo body en PATCH → 200. Esa diferencia es parte de lo que enseña la
 versión (contratos exactos en el spec kit).
 
-> ℹ️ Este proyecto usa puertos propios (8022, 8101, 13326): puede correr al
-> mismo tiempo que los demás proyectos del curso sin chocar.
+> ℹ️ Este proyecto usa los puertos 8022, 8101 y 13326: si alguno ya está
+> ocupado en su máquina, cámbielo en `docker-compose.yml` (el lado izquierdo
+> del `"puerto:puerto"`).
 
 ### Los días siguientes (volver a encender)
 
@@ -112,11 +113,13 @@ proyecto_php/
 ├── api_facturas/                # LA API DE LA v1 — PHP puro, sin framework (puerto 8022)
 │   ├── Dockerfile               # Su imagen: php:8.3-cli + extensión pdo_mysql
 │   ├── index.php                # Front controller: TODA petición entra aquí y se enruta
-│   ├── controladores/           # Capa 1 — HTTP: traduce a códigos de estado y JSON
+│   ├── controladores/           # Capa 1 — HTTP: valida el body (422) y traduce a
+│   │                            #   códigos de estado y JSON
 │   ├── servicios/               # Capa 2 — negocio: interfaz, reglas y el ensamblador
 │   │                            #   (la proto-fábrica que arma las capas)
 │   ├── repositorios/            # Capa 3 — datos: interfaz + SQL con PDO para MariaDB
-│   ├── modelos/                 # ValidadorProducto: valida el body según el verbo (422)
+│   ├── modelos/                 # Producto: la clase entidad (el dato con sus 4
+│   │                            #   propiedades tipadas)
 │   ├── excepciones/             # NoEncontradoExcepcion (el servicio la lanza → 404)
 │   └── pruebas/                 # prueba_capas.php: repositorio FALSO en memoria
 │                                #   (demuestra que las capas se desacoplan de verdad)
@@ -176,7 +179,7 @@ aceptación (se cierra con tag). Detalle completo:
 | Documento | Qué cubre |
 |---|---|
 | [SDD y Spec Kit](docs/SDD_SPECKIT.md) | La metodología con la que se trabaja este curso: la spec manda sobre el código |
-| [El paradigma P.O.O. en PHP](docs/PARADIGMA_POO.md) | Qué es un paradigma, los 4 pilares, y las `interface` de PHP + el Validador como frontera |
+| [El paradigma P.O.O. en PHP](docs/PARADIGMA_POO.md) | Qué es un paradigma, los 4 pilares, y las `interface` de PHP + la validación como frontera |
 | [SOLID y programación por capas](docs/SOLID_Y_CAPAS.md) | Los 5 principios y las capas — y en qué versión se demuestra cada uno |
 | [Principios ACID](docs/PRINCIPIOS_ACID.md) | Las 4 garantías transaccionales, por qué una facturación las exige, y el contraste con BASE |
 | [Conceptos de Docker](docs/CONCEPTOS_DOCKER.md) | Imagen, contenedor, volumen, compose (con el `docker-compose.yml` del proyecto explicado línea por línea) y por qué NO se necesita Kubernetes |

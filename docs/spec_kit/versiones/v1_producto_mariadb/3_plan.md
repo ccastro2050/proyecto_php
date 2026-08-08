@@ -1,4 +1,4 @@
-﻿# Plan técnico — Versión 1: producto + MariaDB (PHP puro)
+# Plan técnico — Versión 1: producto + MariaDB (PHP puro)
 
 > **Versión 1** · CÓMO construir lo especificado en [2_spec.md](2_spec.md).
 > El porqué de cada decisión: [4_research.md](4_research.md) · contratos
@@ -29,9 +29,10 @@
     ├── Dockerfile                    # php:8.3-cli + pdo_mysql (el compose lo construye)
     ├── index.php                     # front controller: recibe TODO y enruta
     ├── modelos/
-    │   └── ValidadorProducto.php     # la frontera de entrada: valida body por verbo (422)
+    │   └── Producto.php              # el modelo: la clase entidad (4 propiedades tipadas)
     ├── controladores/
-    │   └── ControladorProducto.php   # HTTP puro: lee request, llama servicio, arma respuesta
+    │   └── ControladorProducto.php   # HTTP: lee request, VALIDA el body (422), llama
+    │                                 #   servicio y arma la respuesta
     ├── servicios/
     │   ├── IServicioProducto.php     # interface del servicio
     │   ├── ServicioProducto.php      # reglas de negocio; recibe IRepositorioProducto
@@ -49,7 +50,7 @@
 
 ```
 HTTP → index.php            (front controller: método + ruta → controlador)
-     → ControladorProducto  (lee query/body, valida con el Validador → 422,
+     → ControladorProducto  (lee query/body, valida con el modelo → 422,
                              traduce excepciones a códigos HTTP)
      → IServicioProducto    (interfaz — reglas de negocio)
      → IRepositorioProducto (interfaz — el servicio no sabe qué motor hay detrás)
@@ -76,14 +77,20 @@ interface IRepositorioProducto
 El servicio recibe **la interfaz** por constructor. Esto es lo que compra la
 v3: un segundo motor será otra clase con `implements IRepositorioProducto`.
 
-### 4.2 El Validador como frontera de entrada (un método por semántica HTTP)
-PHP no trae Pydantic: la validación **se construye** — y construirla enseña
-más que recibirla gratis. `ValidadorProducto` expone tres métodos estáticos
-que devuelven la lista de errores (vacía = válido):
+### 4.2 La validación del body vive en el controlador (la frontera HTTP)
+PHP puro no trae validación integrada: se construye — y construirla enseña
+más que recibirla gratis de un framework. El **controlador** trae los
+métodos privados que revisan el body y devuelven la lista de errores
+(vacía = válido):
 
-- `validarCrear(array $datos): array`      → POST: todos obligatorios
-- `validarReemplazo(array $datos): array`  → PUT: todos obligatorios (sin código)
-- `validarParcial(array $datos): array`    → PATCH: valida SOLO los enviados
+- `validarCodigo(array $datos): array`     → el código: texto de 1 a 10 caracteres
+- `validarCampos($datos, obligatorios: true)`  → POST/PUT: los 3 campos deben venir
+- `validarCampos($datos, obligatorios: false)` → PATCH: valida SOLO los enviados
+- `filtrarColumnas(array $datos): array`   → lista blanca: bota campos desconocidos
+
+El **modelo** (`modelos/Producto.php`) es la clase entidad básica: las 4
+propiedades tipadas. El repositorio lo construye al leer de la BD y así el
+dato viaja como objeto, no como array anónimo.
 
 Reglas: `codigo` 1–10 caracteres · `nombre` no vacío · `stock` entero ≥ 0 ·
 `valorunitario` numérico ≥ 0. Si hay errores, el controlador responde
@@ -123,7 +130,7 @@ DELETE FROM producto WHERE codigo = :codigo
   UPDATE cuenta filas **cambiadas**, no **encontradas** — un PATCH que escribe
   el mismo valor reportaría 0 filas y parecería un 404. Se corrige en la
   conexión con **`PDO::MYSQL_ATTR_FOUND_ROWS => true`**.
-- El SET del UPDATE se arma solo con columnas que vienen del Validador
+- El SET del UPDATE se arma solo con columnas que vienen del modelo
   (lista blanca), nunca con claves del cliente.
 - El driver mysql devuelve `DECIMAL` como string → el repositorio castea:
   `stock → (int)`, `valorunitario → (float)` al serializar.
@@ -131,7 +138,7 @@ DELETE FROM producto WHERE codigo = :codigo
 ### 4.5 Traducción de excepciones a HTTP (en el controlador)
 | Excepción | HTTP |
 |---|---|
-| (Validador con errores — no es excepción) | 422 |
+| (body con errores de forma — no es excepción) | 422 |
 | `InvalidArgumentException` (regla de negocio: límite ≤ 0, body vacío) | 400 |
 | `NoEncontradoExcepcion` (código inexistente) | 404 |
 | `PDOException` y cualquier otra | 500 (mensaje del motor en `detalle`) |

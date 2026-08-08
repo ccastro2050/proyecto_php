@@ -1,4 +1,4 @@
-﻿# Modelo de datos — Versión 1: la BD completa, la API solo usa `producto`
+# Modelo de datos — Versión 1: la BD completa, la API solo usa `producto`
 
 > **Versión 1** · Decisión clave: **la base de datos `bdfacturas` se crea
 > COMPLETA desde el inicio** (las 12 tablas, sus datos de ejemplo, el trigger
@@ -41,7 +41,7 @@ Datos de ejemplo: **8 productos** (PR001 Laptop Lenovo IdeaPad, 17,
 **Notas para la API:**
 
 - Los valores no-negativos de stock y valorunitario los garantiza el
-  **Validador en la API** (la frontera de entrada, con 422).
+  **la validación del controlador en la API** (la frontera de entrada, con 422).
 - El driver mysql de PDO entrega `DECIMAL` como **string** — el repositorio
   castea al serializar (`stock → int`, `valorunitario → float`).
 - La tabla tiene una relación entrante

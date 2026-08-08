@@ -74,7 +74,7 @@ criterios medibles):
 
 ```markdown
 ### RF5 — Actualizar parcialmente (PATCH + body parcial)
-`PATCH /api/producto/{codigo}` con body Pydantic de campos opcionales:
+`PATCH /api/producto/{codigo}` con body parcial (campos opcionales):
 solo se modifican los enviados. Devuelve filasAfectadas; inexistente → 404.
 
 ## Criterios de aceptación

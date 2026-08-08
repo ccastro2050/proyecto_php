@@ -1,4 +1,4 @@
-﻿# Cómo construir la versión con IA — por chat o con un IDE agéntico
+# Cómo construir la versión con IA — por chat o con un IDE agéntico
 
 > Guía para trabajar la versión en curso con ayuda de IA por **cualquiera de
 > los dos caminos**: un chat web (Gemini, DeepSeek, ChatGPT…) o un IDE
@@ -94,7 +94,7 @@ REGLAS DE TRABAJO (no negociables):
 4. El código debe cumplir los contratos de 6_contracts.md al pie de la letra:
    mismos verbos, mismas rutas, mismos códigos de estado, mismos formatos de
    respuesta (incluido el contraste PUT=reemplazo completo vs PATCH=parcial,
-   y el 422 con la lista de errores del Validador).
+   y el 422 con la lista de errores del modelo).
 5. Todo en español: nombres, comentarios y mensajes. PHP 8.3 con
    declare(strict_types=1) en cada archivo.
 6. Yo trabajo en Windows con un IDE (VS Code, usando su terminal integrada
@@ -136,7 +136,7 @@ mi_v1_producto/                   ← SU carpeta (nueva, vacía al empezar)
     ├── Dockerfile                ← Fase 6 (para el "un solo comando" final)
     ├── index.php                 ← Fase 5 (el front controller)
     ├── modelos/
-    │   └── ValidadorProducto.php ← Fase 1
+    │   └── Producto.php ← Fase 1
     ├── controladores/
     │   └── ControladorProducto.php    ← Fase 5
     ├── servicios/
@@ -154,7 +154,7 @@ mi_v1_producto/                   ← SU carpeta (nueva, vacía al empezar)
 
 **Cómo crear un archivo donde la IA diga** (VS Code): en el explorador
 (panel izquierdo), clic en el ícono *New File* y escriba la **ruta completa**,
-por ejemplo `api_facturas/modelos/ValidadorProducto.php` — VS Code crea las
+por ejemplo `api_facturas/modelos/Producto.php` — VS Code crea las
 carpetas intermedias solas. Pegue el contenido que entregó la IA y guarde
 (`Ctrl+S`).
 
@@ -163,7 +163,7 @@ entrega tres tipos de cosas:
 
 | La IA le entrega | Usted lo pone en |
 |---|---|
-| Un bloque de código con su ruta (ej.: "Archivo: `api_facturas/modelos/ValidadorProducto.php`") | Ese archivo, en ESA ruta exacta — un bloque = un archivo completo (reemplaza todo el contenido, no "agregue al final") |
+| Un bloque de código con su ruta (ej.: "Archivo: `api_facturas/modelos/Producto.php`") | Ese archivo, en ESA ruta exacta — un bloque = un archivo completo (reemplaza todo el contenido, no "agregue al final") |
 | (La BD no la entrega la IA) | `db/init.sql` se **copia del repositorio** tal cual, en la Fase 0 — si la IA intenta escribirle un `CREATE TABLE`, recuérdele que la BD ya viene dada |
 | Comandos (docker compose, php -l, php -S, curl) | La terminal integrada del IDE, parado en la carpeta correcta (ver abajo) |
 
@@ -245,8 +245,8 @@ REGLAS (no negociables):
    y espera mi OK antes de pasar a la siguiente.
 3. El código debe cumplir 6_contracts.md al pie de la letra: verbos, rutas,
    códigos de estado y formatos de respuesta exactos (incluido el contraste
-   PUT=reemplazo completo vs PATCH=parcial y el 422 con errores del
-   Validador).
+   PUT=reemplazo completo vs PATCH=parcial y el 422 con la lista de errores
+   de la validación del controlador).
 4. Todo en español, PHP 8.3 con declare(strict_types=1), con los comentarios
    didácticos que exige la constitución.
 5. Al final, corre el smoke test completo de 7_quickstart.md §2 y muéstrame

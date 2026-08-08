@@ -45,7 +45,7 @@ cada principio tenga su momento de demostración en la ruta de versiones:
 > Una clase debe tener UNA sola razón para cambiar.
 
 **En la v1:** el controlador cambia si cambia el HTTP; el servicio si cambian
-las reglas de negocio; el repositorio si cambia el SQL; el Validador si
+las reglas de negocio; el repositorio si cambia el SQL; el modelo si
 cambian las reglas de forma. Cuatro archivos, cuatro razones de cambio, cero
 mezcla.
 

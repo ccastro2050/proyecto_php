@@ -1,4 +1,4 @@
-﻿# Contratos HTTP — Versión 1: producto + MariaDB (PHP puro)
+# Contratos HTTP — Versión 1: producto + MariaDB (PHP puro)
 
 > **Versión 1** · Base: `http://localhost:8022`. En PHP puro no hay Swagger
 > automático: **este documento ES el contrato publicado** (y el endpoint `/`
@@ -33,7 +33,7 @@ La v1 usa **los cinco verbos** y las **tres vías de envío de datos**:
 
 | Origen | HTTP |
 |---|---|
-| Body inválido según el **Validador** | **422** con `errores: [ "...", ... ]` |
+| Body inválido según la **validación del controlador** | **422** con `errores: [ "...", ... ]` |
 | Regla de negocio (`limite ≤ 0`, PATCH con body vacío) | 400 |
 | Código inexistente (`NoEncontradoExcepcion`) | 404 |
 | Error del motor (PK duplicada, BD caída — `PDOException`) | 500 con el mensaje en `detalle` |
@@ -66,7 +66,7 @@ GET /api/producto/PR001
 
 ## 3. `POST /api/producto` — Crear (body completo)
 
-Body (todos obligatorios; los valida `ValidadorProducto::validarCrear`):
+Body (todos obligatorios; los valida el controlador):
 
 ```
 POST /api/producto

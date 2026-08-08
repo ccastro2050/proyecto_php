@@ -1,4 +1,4 @@
-﻿# Tareas — Versión 1: api_facturas con producto + MariaDB (PHP puro)
+# Tareas — Versión 1: api_facturas con producto + MariaDB (PHP puro)
 
 > **Versión 1** · El orden de construcción, partiendo de CERO. Cada fase termina
 > en algo **verificable**. Requisitos: [2_spec.md](2_spec.md) · técnica:
@@ -21,14 +21,15 @@
 **Verificar:** un cliente SQL (HeidiSQL/DBeaver a `localhost:13326`) ve las
 **12 tablas** y `SELECT count(*) FROM producto` da **8**.
 
-## Fase 1 — El Validador (la frontera de entrada)
-- [ ] `modelos/ValidadorProducto.php`: métodos estáticos `validarCrear`,
-      `validarReemplazo` y `validarParcial` que devuelven la lista de errores
-      (vacía = válido) — reglas en [3_plan.md](3_plan.md) §4.2.
+## Fase 1 — El modelo Producto (la clase entidad)
+- [ ] `modelos/Producto.php`: la clase con las 4 propiedades tipadas
+      (`codigo` string, `nombre` string, `stock` int, `valorunitario` float)
+      declaradas en el constructor (promoción de propiedades). Nada más:
+      es el dato como objeto.
 
 **Verificar:** en un script suelto (o `php -a`),
-`ValidadorProducto::validarCrear(['codigo'=>'X','nombre'=>'Y','stock'=>-1,'valorunitario'=>1])`
-devuelve un error por el stock, y `validarParcial(['stock'=>7])` devuelve `[]`.
+`new Producto('PR001', 'Prueba', 5, 100.0)` construye el objeto y
+`json_encode($producto)` devuelve el JSON con las 4 propiedades.
 
 ## Fase 2 — Contratos (interfaces) y excepción de negocio
 - [ ] `repositorios/IRepositorioProducto.php`: interface con los 5 métodos
@@ -66,7 +67,7 @@ quedaron bien.
 
 ## Fase 5 — Controlador y front controller
 - [ ] `controladores/ControladorProducto.php`: los 6 métodos de producto con
-      el Validador (422), la traducción de excepciones de
+      la validación del controlador (422), la traducción de excepciones de
       [3_plan.md](3_plan.md) §4.5 (400/404/500) y el 204 para lista vacía.
 - [ ] `index.php`: requires, header JSON, router por método + regex
       ([3_plan.md](3_plan.md) §4.6), endpoint `/` de diagnóstico y 404 por

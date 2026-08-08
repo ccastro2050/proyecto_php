@@ -1,4 +1,4 @@
-﻿# Quickstart — Versión 1: producto + MariaDB (PHP puro)
+# Quickstart — Versión 1: producto + MariaDB (PHP puro)
 
 > **Versión 1** · Validación rápida de la v1 ya construida. Si aún no hay
 > nada, empiece por [8_tasks.md](8_tasks.md).
@@ -59,7 +59,7 @@ curl -i -X PUT   http://localhost:8022/api/producto/PR001 -H "Content-Type: appl
 curl -i -X PATCH http://localhost:8022/api/producto/PR001 -H "Content-Type: application/json" `
      -d '{\"stock\":17}'    # 200: PATCH acepta el subconjunto
 
-# 5. El Validador como frontera — nunca llega a la BD
+# 5. La validación como frontera — nunca llega a la BD
 curl -i -X POST http://localhost:8022/api/producto -H "Content-Type: application/json" `
      -d '{\"codigo\":\"PRX\",\"nombre\":\"Test\",\"stock\":-5,\"valorunitario\":100}'   # 422 con errores[]
 curl -i -X POST http://localhost:8022/api/producto -H "Content-Type: application/json" `

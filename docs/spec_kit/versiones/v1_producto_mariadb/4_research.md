@@ -1,4 +1,4 @@
-﻿# Investigación y decisiones — Versión 1: producto + MariaDB (PHP puro)
+# Investigación y decisiones — Versión 1: producto + MariaDB (PHP puro)
 
 > **Versión 1** · **Lectura opcional** (el porqué de las decisiones del plan,
 > con las alternativas que se evaluaron y descartaron). Complementa a
@@ -16,7 +16,7 @@ dependencias.
 Laravel esconde exactamente lo que el curso quiere mostrar (el SQL, el
 enrutamiento, la validación); Slim es razonable pero mete Composer, `vendor/`
 y estándares PSR que compiten por la atención del estudiante. Escribir el
-router de ~60 líneas y el Validador a mano ES el contenido. **Precio
+router de ~60 líneas y la validación a mano ES el contenido. **Precio
 asumido:** características gratis que no tendremos (middleware, DI container,
 docs automáticas) — ninguna es objetivo de la v1.
 
@@ -55,19 +55,24 @@ migraciones entre versiones y deja el trigger de facturación esperando a la
 v2. Costo asumido: 11 tablas a la vista que aún no se usan — por eso la regla
 se declara explícita en la spec.
 
-## D5 — El Validador manual (nuestra "frontera de entrada"), con un método por verbo
+## D5 — Modelo básico + validación en el controlador
 
-**Alternativa descartada:** validar dentro del servicio, o no validar y dejar
-que la BD rechace.
-**Decisión:** `ValidadorProducto` con `validarCrear` (POST, todo
-obligatorio), `validarReemplazo` (PUT, todo obligatorio) y `validarParcial`
-(PATCH, solo lo enviado) → 422 con lista de errores ANTES de tocar el
-servicio.
-**Por qué:** en los stacks con Pydantic la frontera viene gratis; en PHP puro
-**construirla** enseña qué hace realmente una frontera de entrada. Y los tres
-métodos materializan la semántica de cada verbo: el mismo body `{"stock": 7}`
-falla en PUT (le faltan campos) y pasa en PATCH — la diferencia queda escrita
-en código, no en comentarios.
+**Alternativas descartadas:** una clase validadora aparte (mete un concepto
+extra a la estructura), meter la validación dentro del modelo o del
+servicio, o no validar y dejar que la BD rechace.
+**Decisión:** el modelo `Producto` es una clase **básica** (las 4
+propiedades tipadas — el dato como objeto, nada más), y la validación del
+body vive en el **controlador** como métodos privados: la frontera HTTP
+revisa lo que llega de afuera → 422 con lista de errores ANTES de tocar el
+servicio. La estructura queda en las 4 carpetas canónicas: controladores,
+modelos, servicios, repositorios.
+**Por qué:** en los frameworks con validación integrada la frontera viene
+gratis; en PHP puro **construirla** enseña qué hace realmente una frontera
+de entrada. Validar es trabajo de quien recibe la petición (el controlador),
+y el modelo se mantiene simple para no confundir: modelo = el dato con
+tipos. La validación por verbo materializa la semántica HTTP: el mismo body
+`{"stock": 7}` falla en PUT (le faltan campos) y pasa en PATCH — la
+diferencia queda escrita en código, no en comentarios.
 
 ## D6 — PDO con prepared statements (SQL visible)
 

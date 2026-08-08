@@ -107,10 +107,9 @@ solo una cara bonita para escribir ese objeto. Clic en **CONNECT NOW**:
 ![Paso 1 — la conexión guardada y su JSON](img_sqltools/paso01_guardada_json.png)
 
 > En el panel CONNECTIONS pueden convivir varias conexiones — en la captura
-> se ve también la del curso de paradigmas (PostgreSQL en `15432`) junto a
-> la nueva (MariaDB en `13326`). Cada proyecto del curso publica su BD en un
-> puerto distinto justamente para poder tenerlos todos corriendo y
-> conectados a la vez.
+> aparece también otra conexión guardada previamente (un PostgreSQL en el
+> puerto `15432`) junto a la nueva (MariaDB en `13326`). Cada base de datos
+> vive en su propio puerto, así que pueden estar todas conectadas a la vez.
 
 ---
 

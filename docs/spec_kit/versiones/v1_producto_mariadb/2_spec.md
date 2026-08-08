@@ -1,4 +1,4 @@
-﻿# Especificación — Versión 1 del proyecto: api_facturas con producto + MariaDB
+# Especificación — Versión 1 del proyecto: api_facturas con producto + MariaDB
 
 > **Versión 1** del desarrollo incremental ([mapa de versiones](../0_mapa_versiones.md)).
 > Rige la constitución del proyecto: [../../1_constitution.md](../../1_constitution.md).
@@ -57,8 +57,11 @@ frontend (v6) **sin reescribir lo construido**.
 **Incluye:**
 - CRUD de `producto`: listar, obtener por código, crear, reemplazar,
   actualizar parcialmente, eliminar.
-- **Validación manual con un Validador por verbo** (en PHP no hay Pydantic:
-  la frontera de entrada se construye a mano — y eso es contenido del curso).
+- **Modelo básico**: la clase `Producto` con las 4 propiedades tipadas —
+  el dato viaja como objeto, no como array anónimo.
+- **Validación en el controlador** (la frontera HTTP), con un método por
+  verbo: PHP puro no trae validación integrada — se construye a mano, y eso
+  es contenido del curso.
 - Capas con interfaces: `IRepositorioProducto` (interface PHP) implementada
   por `RepositorioProductoMariaDB`; el servicio depende de la interfaz.
 - Configuración por variables de entorno (DSN de PDO, usuario, clave).
@@ -90,7 +93,7 @@ frontend (v6) **sin reescribir lo construido**.
 `GET /api/producto/{codigo}` → 200 con el producto; inexistente → 404.
 
 ### RF3 — Crear producto (POST + body)
-`POST /api/producto` con body JSON validado por el **Validador**
+`POST /api/producto` con body JSON validado por la **validación del controlador**
 (`codigo` 1–10 caracteres, `nombre` no vacío, `stock` entero ≥ 0,
 `valorunitario` numérico ≥ 0 — todos obligatorios).
 Éxito → 200 `{estado, mensaje}`; body inválido → **422 con la lista de
@@ -146,7 +149,7 @@ inexistente → 404.
    campo `nombre` responde 422 (reemplazo completo) mientras el mismo body en
    `PATCH` responde 200 (parcial) — la diferencia entre ambos verbos.
 5. `POST` con `stock: -5` o sin `nombre` → **422 con la lista de errores**
-   (lo rechaza el Validador, nunca llega a la BD); `POST` con código
+   (lo rechaza la validación del controlador, nunca llega a la BD); `POST` con código
    duplicado → 500 con el error del motor.
 6. Prueba de capas (la evidencia de que la arquitectura quedó bien): el
    servicio se puede probar con un repositorio **falso** en memoria que

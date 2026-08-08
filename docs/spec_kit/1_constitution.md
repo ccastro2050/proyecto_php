@@ -1,4 +1,4 @@
-﻿# Constitución del Proyecto PHP
+# Constitución del Proyecto PHP
 
 > Principios **innegociables** que gobiernan todo el proyecto. Esta
 > constitución es **permanente**: describe el sistema COMPLETO al que se llega
