@@ -106,6 +106,9 @@ proyecto_php/
 │   │                            #   MariaDB lo ejecuta sola la PRIMERA vez (volumen vacío)
 │   └── init_phpmyadmin.sql      # BD interna de phpMyAdmin (habilita el Diseñador)
 │
+├── backupdb/                    # Respaldos (dumps) de la BD — su README explica
+│                                #   cómo hacer el backup y cómo restaurarlo
+│
 ├── api_facturas/                # LA API DE LA v1 — PHP puro, sin framework (puerto 8022)
 │   ├── Dockerfile               # Su imagen: php:8.3-cli + extensión pdo_mysql
 │   ├── index.php                # Front controller: TODA petición entra aquí y se enruta
