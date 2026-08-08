@@ -2,15 +2,16 @@
 /**
  * ControladorProducto — la capa HTTP de la v1.
  *
- * Su único trabajo: leer la petición, VALIDAR la forma del body (los ifs de
- * los métodos privados de abajo → 422), delegar al servicio, y traducir el
- * resultado (o la excepción) a una respuesta HTTP con JSON.
+ * Su único trabajo: leer la petición, VALIDAR la forma del body (→ 422),
+ * delegar al servicio, y responder JSON con el código correcto.
  * Aquí NO hay SQL ni reglas de negocio.
  *
- * Traducción a códigos HTTP (el contrato de 6_contracts.md §0):
+ * Cada método público es un verbo de la API (index.php lo llama según el
+ * método HTTP que llegó) y lleva su propio try/catch, siempre con la misma
+ * traducción (el contrato de 6_contracts.md §0):
  *   Body con errores de forma    → 422 (con la lista de errores)
- *   InvalidArgumentException     → 400 (regla de negocio)
- *   NoEncontradoExcepcion        → 404
+ *   InvalidArgumentException     → 400 (regla de negocio, la lanza el servicio)
+ *   NoEncontradoExcepcion        → 404 (no existe, la lanza el servicio)
  *   PDOException y cualquier otra→ 500 (mensaje del motor en `detalle`)
  */
 
@@ -22,97 +23,126 @@ require_once __DIR__ . '/../excepciones/NoEncontradoExcepcion.php';
 
 class ControladorProducto
 {
-    // "Promoción de propiedades" (PHP 8): el parámetro queda guardado como
-    // atributo del objeto ($this->servicio).
-    //   private  → solo esta clase lo ve
-    //   readonly → se asigna una vez y nadie lo puede cambiar después
-    // Ojo al TIPO: es la INTERFAZ IServicioProducto, no una clase concreta.
+    // El constructor recibe y guarda el servicio (PHP 8: declarar el
+    // parámetro con "private readonly" lo vuelve atributo del objeto).
+    // Ojo al TIPO: es la INTERFAZ IServicioProducto — el controlador no
+    // sabe ni le importa qué servicio concreto hay detrás.
     public function __construct(
         private readonly IServicioProducto $servicio,
     ) {
     }
 
     // ------------------------------------------------------------------
-    // GET /api/producto[?limite=N]
+    // GET /api/producto[?limite=N]  →  listar
     // ------------------------------------------------------------------
     public function listar(): void
     {
-        // $_GET es el array con el query string (?limite=5 → $_GET['limite']).
-        // SIEMPRE llega como texto: "(int)" lo convierte a entero aquí, en
-        // la frontera HTTP. El ternario (condición ? siHay : siNoHay) pone
-        // 1000 por defecto.
-        $limite = isset($_GET['limite']) ? (int) $_GET['limite'] : 1000;
+        // $_GET trae el query string (?limite=5 → $_GET['limite']), SIEMPRE
+        // como texto: "(int)" lo convierte a entero aquí, en la frontera.
+        // Si no vino, queda el valor por defecto 1000.
+        if (isset($_GET['limite'])) {
+            $limite = (int) $_GET['limite'];
+        } else {
+            $limite = 1000;
+        }
 
-        // intentar() ejecuta la operación dentro de un try/catch centralizado.
-        // "function () use ($limite)" es una FUNCIÓN ANÓNIMA: un bloque de
-        // código que se pasa como argumento; "use" mete $limite al bloque.
-        $this->intentar(function () use ($limite) {
+        try {
             $productos = $this->servicio->listar($limite);
+
             if ($productos === []) {
                 http_response_code(204);   // 204 = éxito SIN contenido: tabla vacía
                 return;
             }
             // La "envoltura" de las lecturas: metadatos + datos.
             // $productos es una lista de objetos Producto: json_encode los
-            // serializa solo (propiedades públicas del modelo).
+            // convierte solo (usa las propiedades públicas del modelo).
             $this->responder(200, [
                 'tabla'  => 'producto',
                 'limite' => $limite,
                 'total'  => count($productos),
                 'datos'  => $productos,
             ]);
-        });
+        } catch (InvalidArgumentException $e) {
+            // El servicio rechazó una regla de negocio (ej. límite <= 0):
+            $this->responder(400, [
+                'estado' => 400, 'mensaje' => 'Parámetros inválidos.', 'detalle' => $e->getMessage(),
+            ]);
+        } catch (Throwable $e) {
+            // Throwable atrapa TODO lo demás (ej. la BD no responde) → 500:
+            $this->responder(500, [
+                'estado' => 500, 'mensaje' => 'Error interno.', 'detalle' => $e->getMessage(),
+            ]);
+        }
     }
 
     // ------------------------------------------------------------------
-    // GET /api/producto/{codigo}
+    // GET /api/producto/{codigo}  →  obtener uno
     // ------------------------------------------------------------------
     public function obtener(string $codigo): void
     {
-        $this->intentar(function () use ($codigo) {
-            // Si no existe, el servicio lanza NoEncontradoExcepcion y
-            // intentar() la vuelve 404 — aquí solo va el camino feliz.
+        try {
+            // Si existe, el servicio devuelve el objeto Producto y aquí se
+            // responde 200. Si no existe, el servicio LANZA la excepción y
+            // este método salta directo al catch del 404.
             $this->responder(200, $this->servicio->obtener($codigo));
-        });
+        } catch (InvalidArgumentException $e) {
+            $this->responder(400, [
+                'estado' => 400, 'mensaje' => 'Parámetros inválidos.', 'detalle' => $e->getMessage(),
+            ]);
+        } catch (NoEncontradoExcepcion $e) {
+            $this->responder(404, [
+                'estado' => 404, 'mensaje' => 'Producto no encontrado.', 'detalle' => $e->getMessage(),
+            ]);
+        } catch (Throwable $e) {
+            $this->responder(500, [
+                'estado' => 500, 'mensaje' => 'Error interno.', 'detalle' => $e->getMessage(),
+            ]);
+        }
     }
 
     // ------------------------------------------------------------------
-    // POST /api/producto   (body completo, con código)
+    // POST /api/producto  →  crear (body completo, con código)
     // ------------------------------------------------------------------
     public function crear(array $body): void
     {
-        // VALIDAR PRIMERO: la lista de errores decide. POST exige TODO
-        // (incluido el código). Si hay errores → 422 y aquí se acaba.
+        // VALIDAR PRIMERO. POST exige TODO: el código y los 3 campos.
+        // array_merge une las dos listas de errores en una sola.
         $errores = array_merge(
             $this->validarCodigo($body),
-            $this->validarCampos($body, obligatorios: true),
+            $this->validarCampos($body, true),   // true = todos obligatorios
         );
         if ($errores !== []) {
             $this->responder(422, [
                 'estado' => 422, 'mensaje' => 'Datos inválidos.', 'errores' => $errores,
             ]);
-            return;
+            return;   // con errores de forma no se sigue: nada llegó a la BD
         }
 
-        $this->intentar(function () use ($body) {
-            // Se arma el registro: el código + SOLO las columnas conocidas
-            // ("+" une dos arrays; filtrarColumnas botó lo desconocido).
-            $datos = ['codigo' => $body['codigo']] + $this->filtrarColumnas($body);
+        try {
+            // Se arma el registro: el código + SOLO las columnas conocidas:
+            $datos = $this->filtrarColumnas($body);
+            $datos['codigo'] = $body['codigo'];
+
             $this->servicio->crear($datos);
             $this->responder(200, [
                 'estado' => 200, 'mensaje' => 'Producto creado exitosamente.',
             ]);
-        });
+        } catch (Throwable $e) {
+            // Ej.: código duplicado — la BD rechaza por llave primaria:
+            $this->responder(500, [
+                'estado' => 500, 'mensaje' => 'Error interno.', 'detalle' => $e->getMessage(),
+            ]);
+        }
     }
 
     // ------------------------------------------------------------------
-    // PUT /api/producto/{codigo}   (reemplazo COMPLETO)
+    // PUT /api/producto/{codigo}  →  reemplazo COMPLETO
     // ------------------------------------------------------------------
     public function reemplazar(string $codigo, array $body): void
     {
         // PUT exige TODOS los campos (el código va en la URL): un PUT con
         // body parcial muere aquí con 422 — esa es la semántica de PUT.
-        $errores = $this->validarCampos($body, obligatorios: true);
+        $errores = $this->validarCampos($body, true);   // true = todos obligatorios
         if ($errores !== []) {
             $this->responder(422, [
                 'estado' => 422, 'mensaje' => 'Datos inválidos.', 'errores' => $errores,
@@ -120,24 +150,36 @@ class ControladorProducto
             return;
         }
 
-        $this->intentar(function () use ($codigo, $body) {
+        try {
             $filas = $this->servicio->actualizar($codigo, $this->filtrarColumnas($body));
             $this->responder(200, [
                 'estado' => 200, 'mensaje' => 'Producto reemplazado exitosamente.',
                 'filasAfectadas' => $filas,
             ]);
-        });
+        } catch (InvalidArgumentException $e) {
+            $this->responder(400, [
+                'estado' => 400, 'mensaje' => 'Parámetros inválidos.', 'detalle' => $e->getMessage(),
+            ]);
+        } catch (NoEncontradoExcepcion $e) {
+            $this->responder(404, [
+                'estado' => 404, 'mensaje' => 'Producto no encontrado.', 'detalle' => $e->getMessage(),
+            ]);
+        } catch (Throwable $e) {
+            $this->responder(500, [
+                'estado' => 500, 'mensaje' => 'Error interno.', 'detalle' => $e->getMessage(),
+            ]);
+        }
     }
 
     // ------------------------------------------------------------------
-    // PATCH /api/producto/{codigo}   (parcial: solo lo enviado)
+    // PATCH /api/producto/{codigo}  →  actualización PARCIAL
     // ------------------------------------------------------------------
     public function actualizar(string $codigo, array $body): void
     {
-        // PATCH valida SOLO lo que llegó (obligatorios: false). El MISMO
-        // body {"stock": 99} que en PUT da 422, aquí pasa — la diferencia
-        // entre PUT y PATCH queda escrita en código.
-        $errores = $this->validarCampos($body, obligatorios: false);
+        // PATCH valida SOLO lo que llegó (false = nada es obligatorio).
+        // El MISMO body {"stock": 99} que en PUT da 422, aquí pasa —
+        // la diferencia entre PUT y PATCH queda escrita en código.
+        $errores = $this->validarCampos($body, false);
         if ($errores !== []) {
             $this->responder(422, [
                 'estado' => 422, 'mensaje' => 'Datos inválidos.', 'errores' => $errores,
@@ -145,7 +187,7 @@ class ControladorProducto
             return;
         }
 
-        $this->intentar(function () use ($codigo, $body) {
+        try {
             // El body vacío NO es 422: es una regla de negocio (400) que
             // decide el servicio — forma vs negocio, cada cosa en su capa.
             $filas = $this->servicio->actualizar($codigo, $this->filtrarColumnas($body));
@@ -153,28 +195,52 @@ class ControladorProducto
                 'estado' => 200, 'mensaje' => 'Producto actualizado exitosamente.',
                 'filasAfectadas' => $filas,
             ]);
-        });
+        } catch (InvalidArgumentException $e) {
+            $this->responder(400, [
+                'estado' => 400, 'mensaje' => 'Parámetros inválidos.', 'detalle' => $e->getMessage(),
+            ]);
+        } catch (NoEncontradoExcepcion $e) {
+            $this->responder(404, [
+                'estado' => 404, 'mensaje' => 'Producto no encontrado.', 'detalle' => $e->getMessage(),
+            ]);
+        } catch (Throwable $e) {
+            $this->responder(500, [
+                'estado' => 500, 'mensaje' => 'Error interno.', 'detalle' => $e->getMessage(),
+            ]);
+        }
     }
 
     // ------------------------------------------------------------------
-    // DELETE /api/producto/{codigo}
+    // DELETE /api/producto/{codigo}  →  eliminar
     // ------------------------------------------------------------------
     public function eliminar(string $codigo): void
     {
-        $this->intentar(function () use ($codigo) {
+        try {
             $filas = $this->servicio->eliminar($codigo);
             $this->responder(200, [
                 'estado' => 200, 'mensaje' => 'Producto eliminado exitosamente.',
                 'filasEliminadas' => $filas,
             ]);
-        });
+        } catch (InvalidArgumentException $e) {
+            $this->responder(400, [
+                'estado' => 400, 'mensaje' => 'Parámetros inválidos.', 'detalle' => $e->getMessage(),
+            ]);
+        } catch (NoEncontradoExcepcion $e) {
+            $this->responder(404, [
+                'estado' => 404, 'mensaje' => 'Producto no encontrado.', 'detalle' => $e->getMessage(),
+            ]);
+        } catch (Throwable $e) {
+            $this->responder(500, [
+                'estado' => 500, 'mensaje' => 'Error interno.', 'detalle' => $e->getMessage(),
+            ]);
+        }
     }
 
     // ==================================================================
-    // LA VALIDACIÓN DEL BODY (los ifs de la frontera HTTP → 422)
-    // Son métodos privados del controlador porque validar la FORMA de la
-    // petición es trabajo de la capa HTTP. Devuelven LISTA de errores
-    // (vacía = todo bien) para reportarle al cliente todo de una vez.
+    // LA VALIDACIÓN DEL BODY (los ifs de la frontera HTTP → 422).
+    // Métodos privados: validar la FORMA de la petición es trabajo de la
+    // capa HTTP. Devuelven LISTA de errores (vacía = todo bien) para
+    // reportarle al cliente todos los problemas de una vez.
     // ==================================================================
 
     /** El código: obligatorio, texto de 1 a 10 caracteres (VARCHAR(10)). */
@@ -196,6 +262,7 @@ class ControladorProducto
      */
     private function validarCampos(array $datos, bool $obligatorios): array
     {
+        // Se acumulan TODOS los errores (no se corta en el primero):
         $errores = [];
 
         // array_key_exists pregunta "¿vino este campo en el body?".
@@ -212,7 +279,7 @@ class ControladorProducto
         }
 
         if (array_key_exists('stock', $datos)) {
-            // is_int rechaza "7" (string) y 7.5 (float): el TIPO también es
+            // is_int rechaza "7" (texto) y 7.5 (decimal): el TIPO también es
             // parte de la regla.
             if (!is_int($datos['stock']) || $datos['stock'] < 0) {
                 $errores[] = 'El campo stock debe ser un entero mayor o igual a 0.';
@@ -235,53 +302,32 @@ class ControladorProducto
     }
 
     /**
-     * Deja pasar SOLO las columnas conocidas (lista blanca): lo que el
-     * cliente envíe de más se ignora y jamás llega a un SQL.
+     * Deja pasar SOLO las columnas conocidas (lista blanca): cualquier
+     * campo extraño que mande el cliente se ignora y jamás llega a un SQL.
      */
-    private function filtrarColumnas(array $datos): array
+    private function filtrarColumnas(array $body): array
     {
-        $permitidas = ['nombre', 'stock', 'valorunitario'];
-        // array_flip voltea la lista (valores → llaves) y
-        // array_intersect_key deja de $datos SOLO esas llaves:
-        return array_intersect_key($datos, array_flip($permitidas));
-    }
-
-    // ------------------------------------------------------------------
-    // La traducción de excepciones a HTTP, en UN solo lugar
-    // ------------------------------------------------------------------
-
-    // "callable" = algo que se puede ejecutar (las funciones anónimas que
-    // le pasan los métodos de arriba).
-    private function intentar(callable $operacion): void
-    {
-        // try/catch: se intenta la operación; si algo lanza una excepción,
-        // PHP salta al catch cuyo TIPO coincida (se prueban en orden).
-        try {
-            $operacion();
-        } catch (InvalidArgumentException $e) {
-            // La lanza el servicio ante reglas de negocio rotas → 400.
-            // $e->getMessage() trae el texto con que se lanzó.
-            $this->responder(400, [
-                'estado' => 400, 'mensaje' => 'Parámetros inválidos.', 'detalle' => $e->getMessage(),
-            ]);
-        } catch (NoEncontradoExcepcion $e) {
-            // Nuestra excepción propia: el recurso no existe → 404.
-            $this->responder(404, [
-                'estado' => 404, 'mensaje' => 'Producto no encontrado.', 'detalle' => $e->getMessage(),
-            ]);
-        } catch (Throwable $e) {
-            // Throwable = el padre de TODOS los errores de PHP: atrapa lo
-            // inesperado (una PDOException de la BD, por ejemplo) → 500.
-            $this->responder(500, [
-                'estado' => 500, 'mensaje' => 'Error interno.', 'detalle' => $e->getMessage(),
-            ]);
+        $datos = [];
+        if (array_key_exists('nombre', $body)) {
+            $datos['nombre'] = $body['nombre'];
         }
+        if (array_key_exists('stock', $body)) {
+            $datos['stock'] = $body['stock'];
+        }
+        if (array_key_exists('valorunitario', $body)) {
+            $datos['valorunitario'] = $body['valorunitario'];
+        }
+        return $datos;
     }
+
+    // ------------------------------------------------------------------
+    // Respuesta: SIEMPRE se sale por aquí
+    // ------------------------------------------------------------------
 
     /**
      * Escribe el código de estado y el cuerpo JSON.
      * "array|Producto" = acepta un array (envolturas y errores) O un objeto
-     * del modelo (json_encode serializa sus propiedades públicas).
+     * del modelo (json_encode usa sus propiedades públicas).
      */
     private function responder(int $estado, array|Producto $cuerpo): void
     {

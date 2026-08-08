@@ -13,7 +13,7 @@
 | Lenguaje | **PHP 8.3** (tipos estrictos: `declare(strict_types=1)`) | El lenguaje del curso; los tipos escalares y de retorno son parte del contenido |
 | Framework | **NINGUNO** (PHP puro) | Constitución, Artículo 2: lo que se ve es PHP, no magia |
 | Gestor de paquetes | **NINGUNO** (sin Composer, sin `vendor/`) | Cero dependencias = cero fricción y cero cajas negras |
-| Enrutamiento | Front controller `index.php` (parse de URL + regex) | Un router legible completo en ~60 líneas ES la lección |
+| Enrutamiento | Front controller `index.php` (comparaciones simples de ruta con `if`) | Un router legible completo ES la lección |
 | Acceso a datos | **PDO** (extensión `pdo_mysql`) con prepared statements | SQL visible y parametrizado; PDO es el estándar del lenguaje |
 | Servidor (desarrollo) | **PHP built-in server** (`php -S 0.0.0.0:8022 index.php`) | Todo pasa por el front controller sin configurar Apache/nginx; suficiente y transparente para el curso |
 | Contenedor | `php:8.3-cli` + `docker-php-ext-install pdo_mysql` | Imagen oficial; la extensión de MySQL/MariaDB se compila en el build |
@@ -148,8 +148,11 @@ DELETE FROM producto WHERE codigo = :codigo
    lista de requires ES el inventario del proyecto).
 2. `header('Content-Type: application/json; charset=utf-8')`.
 3. Lee `$_SERVER['REQUEST_METHOD']` y el path de `REQUEST_URI`.
-4. Enruta con regex: `/` (diagnóstico) · `#^/api/producto$#` ·
-   `#^/api/producto/([^/]+)$#` — y 404 para todo lo demás.
+4. Enruta con comparaciones simples: `$ruta === '/'` (diagnóstico) ·
+   `$ruta === '/api/producto'` (colección) ·
+   `str_starts_with($ruta, '/api/producto/')` + `substr` para sacar el
+   código — y 404 para todo lo demás. Dentro de cada ruta, `if/elseif`
+   por verbo (405 si el verbo no aplica).
 5. El body JSON se lee UNA vez: `json_decode(file_get_contents('php://input'), true)`.
 
 ## 5. Docker: un solo comando desde v1

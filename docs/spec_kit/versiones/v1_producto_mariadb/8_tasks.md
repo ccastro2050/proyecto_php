@@ -69,7 +69,7 @@ quedaron bien.
 - [ ] `controladores/ControladorProducto.php`: los 6 métodos de producto con
       la validación del controlador (422), la traducción de excepciones de
       [3_plan.md](3_plan.md) §4.5 (400/404/500) y el 204 para lista vacía.
-- [ ] `index.php`: requires, header JSON, router por método + regex
+- [ ] `index.php`: requires, header JSON, router con `if` por ruta y verbo
       ([3_plan.md](3_plan.md) §4.6), endpoint `/` de diagnóstico y 404 por
       defecto.
 
