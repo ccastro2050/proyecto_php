@@ -1,12 +1,14 @@
 <?php
 /**
  * Producto — el MODELO de la v1: la clase que representa una fila de la
- * tabla producto como un objeto con tipos.
+ * tabla producto como un objeto.
  *
- * Eso es todo lo que es un modelo: en vez de cargar el dato en un array
- * anónimo ($fila['stock']), se carga en un objeto con propiedades tipadas
- * ($producto->stock, que SIEMPRE es un int). El resto del sistema trabaja
- * con este objeto.
+ * Estilo clásico de P.O.O. (encapsulamiento):
+ *   - las propiedades son PRIVADAS: nadie por fuera las toca directamente;
+ *   - se LEEN con getters (getCodigo, getNombre, getStock, getValorunitario);
+ *   - se CAMBIAN con setters (setNombre, setStock, setValorunitario);
+ *   - el código NO tiene setter: es la llave primaria — se fija al crear
+ *     el objeto y no cambia nunca.
  */
 
 // Modo estricto de tipos (ver explicación completa en index.php):
@@ -14,22 +16,85 @@ declare(strict_types=1);
 
 class Producto
 {
-    // "Promoción de propiedades" (PHP 8): declarar los parámetros del
-    // constructor con "public" los convierte automáticamente en propiedades
-    // del objeto. Estas 4 líneas equivalen a declarar 4 propiedades arriba
-    // y asignarlas una a una dentro del constructor.
-    //
-    // Cada propiedad lleva su TIPO: si alguien intenta meter "siete" en
-    // stock, PHP lo rechaza (gracias a strict_types).
-    public function __construct(
-        public string $codigo,        // ej. "PR001" (la llave primaria)
-        public string $nombre,        // ej. "Laptop Lenovo IdeaPad"
-        public int $stock,            // unidades disponibles (entero)
-        public float $valorunitario,  // precio (decimal)
-    ) {
+    // Las 4 propiedades, PRIVADAS y con su tipo. "private" = solo esta
+    // clase puede leerlas o escribirlas; el resto del mundo usa los
+    // métodos de abajo. Eso es ENCAPSULAMIENTO.
+    private string $codigo;         // ej. "PR001" (la llave primaria)
+    private string $nombre;         // ej. "Laptop Lenovo IdeaPad"
+    private int $stock;             // unidades disponibles (entero)
+    private float $valorunitario;   // precio (decimal)
+
+    // El constructor recibe los 4 valores y los asigna a las propiedades.
+    // $this = "este objeto": $this->codigo es la propiedad; $codigo es el
+    // parámetro que llegó.
+    public function __construct(string $codigo, string $nombre, int $stock, float $valorunitario)
+    {
+        $this->codigo = $codigo;
+        $this->nombre = $nombre;
+        $this->stock = $stock;
+        $this->valorunitario = $valorunitario;
     }
 
-    // Nada más. Ni siquiera necesita código para volverse JSON:
-    // json_encode($producto) serializa solo las propiedades públicas →
-    // {"codigo":"PR001","nombre":"...","stock":17,"valorunitario":2500000}
+    // ------------------------------------------------------------------
+    // GETTERS — para LEER cada propiedad desde afuera
+    // ------------------------------------------------------------------
+
+    public function getCodigo(): string
+    {
+        return $this->codigo;
+    }
+
+    public function getNombre(): string
+    {
+        return $this->nombre;
+    }
+
+    public function getStock(): int
+    {
+        return $this->stock;
+    }
+
+    public function getValorunitario(): float
+    {
+        return $this->valorunitario;
+    }
+
+    // ------------------------------------------------------------------
+    // SETTERS — para CAMBIAR las propiedades que pueden cambiar
+    // (el codigo NO tiene setter: la llave primaria no se cambia)
+    // ------------------------------------------------------------------
+
+    public function setNombre(string $nombre): void
+    {
+        $this->nombre = $nombre;
+    }
+
+    public function setStock(int $stock): void
+    {
+        $this->stock = $stock;
+    }
+
+    public function setValorunitario(float $valorunitario): void
+    {
+        $this->valorunitario = $valorunitario;
+    }
+
+    // ------------------------------------------------------------------
+    // Conversión para la respuesta JSON
+    // ------------------------------------------------------------------
+
+    /**
+     * Devuelve el producto como array (columna => valor), listo para que
+     * json_encode lo convierta en JSON. Es necesario porque las propiedades
+     * son privadas: json_encode no las ve — este método las entrega.
+     */
+    public function toArray(): array
+    {
+        return [
+            'codigo'        => $this->codigo,
+            'nombre'        => $this->nombre,
+            'stock'         => $this->stock,
+            'valorunitario' => $this->valorunitario,
+        ];
+    }
 }

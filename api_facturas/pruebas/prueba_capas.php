@@ -41,7 +41,7 @@ class RepositorioFalsoEnMemoria implements IRepositorioProducto
     public function crear(Producto $producto): bool
     {
         // El objeto del modelo se guarda tal cual, con su código como llave:
-        $this->datos[$producto->codigo] = $producto;
+        $this->datos[$producto->getCodigo()] = $producto;
         return true;
     }
 
@@ -52,16 +52,16 @@ class RepositorioFalsoEnMemoria implements IRepositorioProducto
             return 0;
         }
         // Se escriben SOLO los campos que llegaron (igual que el UPDATE
-        // dinámico del repositorio real):
+        // dinámico del repositorio real), usando los SETTERS del modelo:
         $producto = $this->datos[$codigo];
         if (array_key_exists('nombre', $datos)) {
-            $producto->nombre = $datos['nombre'];
+            $producto->setNombre($datos['nombre']);
         }
         if (array_key_exists('stock', $datos)) {
-            $producto->stock = $datos['stock'];
+            $producto->setStock($datos['stock']);
         }
         if (array_key_exists('valorunitario', $datos)) {
-            $producto->valorunitario = (float) $datos['valorunitario'];
+            $producto->setValorunitario((float) $datos['valorunitario']);
         }
         return 1;
     }
@@ -94,13 +94,13 @@ function verificar(bool $condicion, string $descripcion): void
 }
 
 // El ciclo completo contra el repositorio falso. Note que las lecturas
-// devuelven OBJETOS Producto: se pregunta por propiedades (->codigo),
-// no por llaves de array (['codigo']).
+// devuelven OBJETOS Producto: se pregunta con los getters del modelo
+// (getCodigo()), no con llaves de array (['codigo']).
 $servicio->crear(['codigo' => 'T1', 'nombre' => 'Test', 'stock' => 5, 'valorunitario' => 100.0]);
-verificar($servicio->listar(10)[0]->codigo === 'T1',          'crear + listar');
-verificar($servicio->obtener('T1')->nombre === 'Test',        'obtener por código');
+verificar($servicio->listar(10)[0]->getCodigo() === 'T1',     'crear + listar');
+verificar($servicio->obtener('T1')->getNombre() === 'Test',   'obtener por código');
 verificar($servicio->actualizar('T1', ['stock' => 9]) === 1,  'actualizar');
-verificar($servicio->obtener('T1')->stock === 9,              'el stock quedó en 9');
+verificar($servicio->obtener('T1')->getStock() === 9,         'el stock quedó en 9');
 verificar($servicio->eliminar('T1') === 1,                    'eliminar');
 
 // Las excepciones de negocio también funcionan sin BD:

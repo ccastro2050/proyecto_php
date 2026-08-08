@@ -118,8 +118,8 @@ proyecto_php/
 │   ├── servicios/               # Capa 2 — negocio: interfaz, reglas y el ensamblador
 │   │                            #   (la proto-fábrica que arma las capas)
 │   ├── repositorios/            # Capa 3 — datos: interfaz + SQL con PDO para MariaDB
-│   ├── modelos/                 # Producto: la clase entidad (el dato con sus 4
-│   │                            #   propiedades tipadas)
+│   ├── modelos/                 # Producto: la clase entidad clásica (propiedades
+│   │                            #   privadas + getters/setters + toArray)
 │   ├── excepciones/             # NoEncontradoExcepcion (el servicio la lanza → 404)
 │   └── pruebas/                 # prueba_capas.php: repositorio FALSO en memoria
 │                                #   (demuestra que las capas se desacoplan de verdad)

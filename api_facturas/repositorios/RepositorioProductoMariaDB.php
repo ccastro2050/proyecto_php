@@ -70,10 +70,10 @@ class RepositorioProductoMariaDB implements IRepositorioProducto
     private function armarProducto(array $fila): Producto
     {
         return new Producto(
-            codigo:        $fila['codigo'],
-            nombre:        $fila['nombre'],
-            stock:         (int) $fila['stock'],
-            valorunitario: (float) $fila['valorunitario'],
+            $fila['codigo'],
+            $fila['nombre'],
+            (int) $fila['stock'],
+            (float) $fila['valorunitario'],
         );
     }
 
@@ -124,12 +124,12 @@ class RepositorioProductoMariaDB implements IRepositorioProducto
         $sql = 'INSERT INTO producto (codigo, nombre, stock, valorunitario)
                 VALUES (:codigo, :nombre, :stock, :valorunitario)';
         $sentencia = $this->obtenerConexion()->prepare($sql);
-        // Los valores salen del OBJETO del modelo (ya tipados y limpios):
+        // Los valores salen del OBJETO del modelo, a través de sus getters:
         $sentencia->execute([
-            'codigo'        => $producto->codigo,
-            'nombre'        => $producto->nombre,
-            'stock'         => $producto->stock,
-            'valorunitario' => $producto->valorunitario,
+            'codigo'        => $producto->getCodigo(),
+            'nombre'        => $producto->getNombre(),
+            'stock'         => $producto->getStock(),
+            'valorunitario' => $producto->getValorunitario(),
         ]);
         // rowCount = cuántas filas tocó la última sentencia (1 si insertó):
         return $sentencia->rowCount() === 1;

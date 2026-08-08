@@ -81,16 +81,16 @@ class ServicioProducto implements IServicioProducto
 
     public function crear(array $datos): void
     {
-        // Los datos ya pasaron por la validación del controlador (tipos y rangos). Aquí el
-        // NEGOCIO construye el objeto del MODELO: desde este punto el
-        // producto deja de ser un array y viaja tipado.
+        // Los datos ya pasaron por la validación del controlador (tipos y
+        // rangos). Aquí el NEGOCIO construye el objeto del MODELO: desde
+        // este punto el producto deja de ser un array y viaja tipado.
         // (float) porque el JSON pudo traer 120000 —entero— y la propiedad
         // del modelo es float:
         $producto = new Producto(
-            codigo:        $datos['codigo'],
-            nombre:        $datos['nombre'],
-            stock:         $datos['stock'],
-            valorunitario: (float) $datos['valorunitario'],
+            $datos['codigo'],
+            $datos['nombre'],
+            $datos['stock'],
+            (float) $datos['valorunitario'],
         );
         // Si la BD rechaza (código duplicado → viola la PK), la PDOException
         // sube tal cual y el controlador la convierte en 500.

@@ -29,7 +29,8 @@
     ├── Dockerfile                    # php:8.3-cli + pdo_mysql (el compose lo construye)
     ├── index.php                     # front controller: recibe TODO y enruta
     ├── modelos/
-    │   └── Producto.php              # el modelo: la clase entidad (4 propiedades tipadas)
+    │   └── Producto.php              # el modelo: entidad clásica (propiedades privadas,
+    │                                 #   getters/setters y toArray para el JSON)
     ├── controladores/
     │   └── ControladorProducto.php   # HTTP: lee request, VALIDA el body (422), llama
     │                                 #   servicio y arma la respuesta
@@ -88,9 +89,10 @@ métodos privados que revisan el body y devuelven la lista de errores
 - `validarCampos($datos, obligatorios: false)` → PATCH: valida SOLO los enviados
 - `filtrarColumnas(array $datos): array`   → lista blanca: bota campos desconocidos
 
-El **modelo** (`modelos/Producto.php`) es la clase entidad básica: las 4
-propiedades tipadas. El repositorio lo construye al leer de la BD y así el
-dato viaja como objeto, no como array anónimo.
+El **modelo** (`modelos/Producto.php`) es la clase entidad clásica: las 4
+propiedades privadas, sus getters/setters y `toArray()`. El repositorio lo
+construye al leer de la BD y así el dato viaja como objeto, no como array
+anónimo.
 
 Reglas: `codigo` 1–10 caracteres · `nombre` no vacío · `stock` entero ≥ 0 ·
 `valorunitario` numérico ≥ 0. Si hay errores, el controlador responde

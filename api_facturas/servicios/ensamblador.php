@@ -24,11 +24,10 @@ function crearServicioProducto(): IServicioProducto
     //   ?:           → "si vino vacía o no existe, usa este valor por defecto"
     // Los defaults apuntan a localhost:13326 = el puerto PUBLICADO de la BD,
     // para poder correr la API sin Docker mientras la BD sí está en Docker.
-    // Los argumentos con nombre (dsn:, usuario:, clave:) dicen qué es cada cosa.
     $repositorio = new RepositorioProductoMariaDB(
-        dsn:     getenv('DB_DSN')     ?: 'mysql:host=localhost;port=13326;dbname=bdfacturas_mariadb_local',
-        usuario: getenv('DB_USUARIO') ?: 'paradigmas',
-        clave:   getenv('DB_CLAVE')   ?: 'paradigmas123',
+        getenv('DB_DSN')     ?: 'mysql:host=localhost;port=13326;dbname=bdfacturas_mariadb_local',  // dsn
+        getenv('DB_USUARIO') ?: 'paradigmas',       // usuario
+        getenv('DB_CLAVE')   ?: 'paradigmas123',    // clave
     );
 
     // Se ARMA la cadena de capas: el servicio recibe el repositorio ya

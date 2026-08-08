@@ -57,8 +57,9 @@ frontend (v6) **sin reescribir lo construido**.
 **Incluye:**
 - CRUD de `producto`: listar, obtener por código, crear, reemplazar,
   actualizar parcialmente, eliminar.
-- **Modelo básico**: la clase `Producto` con las 4 propiedades tipadas —
-  el dato viaja como objeto, no como array anónimo.
+- **Modelo clásico**: la clase `Producto` con las 4 propiedades **privadas**,
+  getters y setters (encapsulamiento) y `toArray()` para el JSON — el dato
+  viaja como objeto, no como array anónimo.
 - **Validación en el controlador** (la frontera HTTP), con un método por
   verbo: PHP puro no trae validación integrada — se construye a mano, y eso
   es contenido del curso.

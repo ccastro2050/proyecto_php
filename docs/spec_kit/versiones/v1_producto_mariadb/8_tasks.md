@@ -22,14 +22,17 @@
 **12 tablas** y `SELECT count(*) FROM producto` da **8**.
 
 ## Fase 1 — El modelo Producto (la clase entidad)
-- [ ] `modelos/Producto.php`: la clase con las 4 propiedades tipadas
-      (`codigo` string, `nombre` string, `stock` int, `valorunitario` float)
-      declaradas en el constructor (promoción de propiedades). Nada más:
-      es el dato como objeto.
+- [ ] `modelos/Producto.php`: la clase entidad al estilo clásico —
+      4 propiedades **privadas** (`codigo` string, `nombre` string,
+      `stock` int, `valorunitario` float), constructor que las asigna,
+      **getters** para las 4, **setters** para las 3 que pueden cambiar
+      (el código es la llave: sin setter) y `toArray()` que devuelve el
+      array columna→valor para el JSON.
 
 **Verificar:** en un script suelto (o `php -a`),
-`new Producto('PR001', 'Prueba', 5, 100.0)` construye el objeto y
-`json_encode($producto)` devuelve el JSON con las 4 propiedades.
+`$p = new Producto('PR001', 'Prueba', 5, 100.0);` construye el objeto,
+`$p->getStock()` devuelve 5, `$p->setStock(9)` lo cambia, y
+`json_encode($p->toArray())` devuelve el JSON con las 4 columnas.
 
 ## Fase 2 — Contratos (interfaces) y excepción de negocio
 - [ ] `repositorios/IRepositorioProducto.php`: interface con los 5 métodos

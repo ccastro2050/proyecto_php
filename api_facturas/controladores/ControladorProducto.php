@@ -53,14 +53,19 @@ class ControladorProducto
                 http_response_code(204);   // 204 = éxito SIN contenido: tabla vacía
                 return;
             }
+            // $productos es una lista de objetos Producto. Como sus
+            // propiedades son privadas, cada uno se convierte a array con
+            // su toArray() antes de responder:
+            $datos = [];
+            foreach ($productos as $producto) {
+                $datos[] = $producto->toArray();
+            }
             // La "envoltura" de las lecturas: metadatos + datos.
-            // $productos es una lista de objetos Producto: json_encode los
-            // convierte solo (usa las propiedades públicas del modelo).
             $this->responder(200, [
                 'tabla'  => 'producto',
                 'limite' => $limite,
-                'total'  => count($productos),
-                'datos'  => $productos,
+                'total'  => count($datos),
+                'datos'  => $datos,
             ]);
         } catch (InvalidArgumentException $e) {
             // El servicio rechazó una regla de negocio (ej. límite <= 0):
@@ -81,10 +86,11 @@ class ControladorProducto
     public function obtener(string $codigo): void
     {
         try {
-            // Si existe, el servicio devuelve el objeto Producto y aquí se
-            // responde 200. Si no existe, el servicio LANZA la excepción y
-            // este método salta directo al catch del 404.
-            $this->responder(200, $this->servicio->obtener($codigo));
+            // Si existe, el servicio devuelve el objeto Producto (se
+            // responde su toArray). Si no existe, el servicio LANZA la
+            // excepción y este método salta directo al catch del 404.
+            $producto = $this->servicio->obtener($codigo);
+            $this->responder(200, $producto->toArray());
         } catch (InvalidArgumentException $e) {
             $this->responder(400, [
                 'estado' => 400, 'mensaje' => 'Parámetros inválidos.', 'detalle' => $e->getMessage(),
@@ -324,12 +330,8 @@ class ControladorProducto
     // Respuesta: SIEMPRE se sale por aquí
     // ------------------------------------------------------------------
 
-    /**
-     * Escribe el código de estado y el cuerpo JSON.
-     * "array|Producto" = acepta un array (envolturas y errores) O un objeto
-     * del modelo (json_encode usa sus propiedades públicas).
-     */
-    private function responder(int $estado, array|Producto $cuerpo): void
+    /** Escribe el código de estado y el cuerpo JSON de la respuesta. */
+    private function responder(int $estado, array $cuerpo): void
     {
         http_response_code($estado);                        // el código HTTP (200, 404…)
         echo json_encode($cuerpo, JSON_UNESCAPED_UNICODE);  // el body como JSON
