@@ -110,6 +110,10 @@ proyecto_php/
 ├── backupdb/                    # Respaldos (dumps) de la BD — su README explica
 │                                #   cómo hacer el backup y cómo restaurarlo
 │
+├── postman/                     # La colección de Postman lista para importar:
+│                                #   los endpoints de la v1 con clics (no hay Swagger
+│                                #   en PHP puro — Postman cumple ese papel)
+│
 ├── api_facturas/                # LA API DE LA v1 — PHP puro, sin framework (puerto 8022)
 │   ├── Dockerfile               # Su imagen: php:8.3-cli + extensión pdo_mysql
 │   ├── index.php                # Front controller: TODA petición entra aquí y se enruta
@@ -179,6 +183,7 @@ aceptación (se cierra con tag). Detalle completo:
 | Documento | Qué cubre |
 |---|---|
 | [El flujo de una petición](docs/FLUJO_DE_UNA_PETICION.md) | **Léalo primero:** dónde está el GET, dónde se captura el POST, y el viaje completo de una petición por las capas — con los comandos para probar los 5 verbos |
+| [Colección de Postman](postman/README.md) | Los 13 endpoints de la v1 listos para importar y probar con clics — incluida la pareja PUT=422 vs PATCH=200 |
 | [SDD y Spec Kit](docs/SDD_SPECKIT.md) | La metodología con la que se trabaja este curso: la spec manda sobre el código |
 | [El paradigma P.O.O. en PHP](docs/PARADIGMA_POO.md) | Qué es un paradigma, los 4 pilares, y las `interface` de PHP + la validación como frontera |
 | [SOLID y programación por capas](docs/SOLID_Y_CAPAS.md) | Los 5 principios y las capas — y en qué versión se demuestra cada uno |
