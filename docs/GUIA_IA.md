@@ -166,17 +166,16 @@ Si un bloque llega **sin ruta**, no adivine: pregúntele "¿en qué archivo va
 esto?". Y si le dice "modifica la línea X", pídale mejor el archivo completo
 actualizado — copiar archivos enteros evita errores de edición manual.
 
-**Dónde parar la terminal:** los comandos de Docker se corren desde la raíz
-(`mi_v1_producto/`); `php -S localhost:8022 index.php` y
-`php pruebas/prueba_capas.php` se corren desde `api_facturas/`:
+**¿Desde qué carpeta se corre cada comando?** (el error más común es correr
+un comando parado en la carpeta equivocada — "no encuentro el archivo"):
 
-```powershell
-cd api_facturas
-php -S localhost:8022 index.php
-```
+| Comando | Se corre desde |
+|---|---|
+| `docker compose ...` | La **raíz** de su proyecto (ahí vive `docker-compose.yml`) |
+| `php -S localhost:8022 index.php` · `php pruebas\prueba_capas.php` | `api_facturas\` (ahí vive el código) — primero `cd api_facturas` |
 
-> Nota: no hay venv, ni `npm install`, ni Composer — PHP puro no necesita
-> instalar dependencias. Esa simplicidad es una decisión de la constitución.
+> Nota: no hay que instalar nada más — PHP puro no usa librerías externas
+> (decisión de la constitución).
 
 ### A.3 El prompt (cópielo tal cual como PRIMER mensaje)
 
