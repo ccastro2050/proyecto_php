@@ -1,0 +1,52 @@
+﻿# ==============================================================
+# Proyecto PHP — versión 1: api_facturas (PHP puro) + MariaDB
+#
+#   Navegador → API FACTURAS (PHP, :8022) → MariaDB (bdfacturas)
+#
+# Uso: docker compose up -d --build     (UN solo comando)
+# Reset de la BD: docker compose down -v && docker compose up -d
+#
+# Este archivo CRECE por versiones: v3 suma PostgreSQL, v4 SQL
+# Server, v5 la API genérica, v6 el front.
+# ==============================================================
+services:
+
+  # --- MariaDB 11 con la BD bdfacturas COMPLETA (db/init.sql) ---
+  mariadb:
+    image: mariadb:11
+    environment:
+      MARIADB_ROOT_PASSWORD: paradigmas123
+      MARIADB_DATABASE: bdfacturas_mariadb_local
+      MARIADB_USER: paradigmas
+      MARIADB_PASSWORD: paradigmas123
+    volumes:
+      - mariadbdata:/var/lib/mysql            # los datos sobreviven a `down`
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+        # ↑ se ejecuta SOLO con el volumen vacío (primera vez / tras down -v)
+    ports:
+      - "13326:3306"     # puerto en su PC (para HeidiSQL/DBeaver opcional)
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # --- API Facturas v1 — PHP puro + PDO ---
+  api-facturas:
+    build: ./api_facturas
+    volumes:
+      - ./api_facturas:/app        # el código montado: guardar un .php = refrescar
+    restart: unless-stopped
+    ports:
+      - "8022:8022"                # http://localhost:8022
+    environment:
+      # Conexión PDO (entre contenedores se usa el nombre del servicio):
+      DB_DSN: mysql:host=mariadb;port=3306;dbname=bdfacturas_mariadb_local
+      DB_USUARIO: paradigmas
+      DB_CLAVE: paradigmas123
+    depends_on:
+      mariadb:
+        condition: service_healthy   # arranca cuando la BD RESPONDE, no por azar
+
+volumes:
+  mariadbdata:
