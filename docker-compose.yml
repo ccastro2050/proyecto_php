@@ -24,6 +24,8 @@ services:
       - mariadbdata:/var/lib/mysql            # los datos sobreviven a `down`
       - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
         # ↑ se ejecuta SOLO con el volumen vacío (primera vez / tras down -v)
+      - ./db/init_phpmyadmin.sql:/docker-entrypoint-initdb.d/init_phpmyadmin.sql:ro
+        # ↑ BD interna de phpMyAdmin (habilita el Diseñador y otras extras)
     ports:
       - "13326:3306"     # puerto en su PC (para HeidiSQL/DBeaver opcional)
     healthcheck:
