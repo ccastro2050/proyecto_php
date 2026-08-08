@@ -2,6 +2,7 @@
 # Proyecto PHP — versión 1: api_facturas (PHP puro) + MariaDB
 #
 #   Navegador → API FACTURAS (PHP, :8022) → MariaDB (bdfacturas)
+#   Navegador → phpMyAdmin  (:8101) ──────→ MariaDB (administración)
 #
 # Uso: docker compose up -d --build     (UN solo comando)
 # Reset de la BD: docker compose down -v && docker compose up -d
@@ -47,6 +48,18 @@ services:
     depends_on:
       mariadb:
         condition: service_healthy   # arranca cuando la BD RESPONDE, no por azar
+
+  # --- phpMyAdmin (administrador web de MariaDB, también en Docker) ---
+  phpmyadmin:
+    image: phpmyadmin:latest
+    environment:
+      PMA_HOST: mariadb              # a cuál servidor se conecta (nombre del servicio)
+      PMA_USER: paradigmas
+      PMA_PASSWORD: paradigmas123
+    ports:
+      - "8101:80"                    # http://localhost:8101
+    depends_on:
+      - mariadb
 
 volumes:
   mariadbdata:

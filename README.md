@@ -39,15 +39,15 @@ la API:
 |---|---|
 | **API Facturas** — diagnóstico | http://localhost:8022/ |
 | Listar productos | http://localhost:8022/api/producto |
-| MariaDB (para HeidiSQL/DBeaver, opcional) | `localhost:13326` · `paradigmas`/`paradigmas123` |
+| **phpMyAdmin** (administrar MariaDB desde el navegador) | http://localhost:8101 |
+| MariaDB (para SQLTools/DBeaver, opcional) | `localhost:13326` · `paradigmas`/`paradigmas123` |
 
 Pruebe la joya didáctica de la v1: PUT con solo `{"stock": 99}` → 422; el
 mismo body en PATCH → 200. Esa diferencia es parte de lo que enseña la
 versión (contratos exactos en el spec kit).
 
-> ⚠️ Si también tiene corriendo otro proyecto del curso (paradigmas,
-> construcción), apáguelo primero (`docker compose down` en ESE proyecto):
-> comparten el puerto 8022.
+> ℹ️ Este proyecto usa puertos propios (8022, 8101, 13326): puede correr al
+> mismo tiempo que los demás proyectos del curso sin chocar.
 
 ### Los días siguientes (volver a encender)
 

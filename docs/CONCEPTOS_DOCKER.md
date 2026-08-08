@@ -133,6 +133,17 @@ services:                          # el mapa de TODOS los contenedores del siste
       mariadb:
         condition: service_healthy # arranca cuando la BD RESPONDE (healthcheck), no por azar
 
+  phpmyadmin:                      # administrador web de MariaDB (también un contenedor)
+    image: phpmyadmin:latest       # imagen del registro: no escribimos ni una línea de él
+    environment:
+      PMA_HOST: mariadb            # a cuál servidor se conecta: el nombre del servicio
+      PMA_USER: paradigmas
+      PMA_PASSWORD: paradigmas123
+    ports:
+      - "8101:80"                  # http://localhost:8101 (adentro escucha en el 80)
+    depends_on:
+      - mariadb                    # versión simple: solo orden de arranque
+
 volumes:
   mariadbdata:                     # declaración del volumen nombrado (la "memoria" de la BD)
 ```
@@ -140,9 +151,10 @@ volumes:
 Las tres ideas que este archivo demuestra:
 
 1. **Dos redes de nombres**: hacia su PC, puertos publicados
-   (`localhost:8022`, `localhost:13326`); entre contenedores, nombres de
-   servicio (`mariadb:3306`). La misma BD tiene dos "direcciones" según
-   quién la llame.
+   (`localhost:8022`, `localhost:8101`, `localhost:13326`); entre
+   contenedores, nombres de servicio (`mariadb:3306`). La misma BD tiene dos
+   "direcciones" según quién la llame — phpMyAdmin lo demuestra: usted lo abre
+   por `localhost:8101`, pero él le habla a la BD por `mariadb:3306`.
 2. **Dependencias por salud**: `service_healthy` + healthcheck — la API
    espera a que la BD responda, no a que el contenedor exista.
 3. **Desarrollo dentro del contenedor**: el código montado como volumen —
