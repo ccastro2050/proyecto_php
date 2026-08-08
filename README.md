@@ -93,7 +93,53 @@ siguiendo las especificaciones — con o sin ayuda de IA:
 
 ---
 
-## 2. La ruta de versiones
+## 2. Estructura del repositorio
+
+Qué es cada carpeta y cada archivo, y para qué sirve:
+
+```
+proyecto_php/
+├── docker-compose.yml           # TODO el sistema declarado: MariaDB + API + phpMyAdmin
+│                                #   (el "un solo comando" del proyecto)
+├── db/
+│   ├── init.sql                 # Crea bdfacturas COMPLETA (12 tablas, triggers, datos).
+│   │                            #   MariaDB lo ejecuta sola la PRIMERA vez (volumen vacío)
+│   └── init_phpmyadmin.sql      # BD interna de phpMyAdmin (habilita el Diseñador)
+│
+├── api_facturas/                # LA API DE LA v1 — PHP puro, sin framework (puerto 8022)
+│   ├── Dockerfile               # Su imagen: php:8.3-cli + extensión pdo_mysql
+│   ├── index.php                # Front controller: TODA petición entra aquí y se enruta
+│   ├── controladores/           # Capa 1 — HTTP: traduce a códigos de estado y JSON
+│   ├── servicios/               # Capa 2 — negocio: interfaz, reglas y el ensamblador
+│   │                            #   (la proto-fábrica que arma las capas)
+│   ├── repositorios/            # Capa 3 — datos: interfaz + SQL con PDO para MariaDB
+│   ├── modelos/                 # ValidadorProducto: valida el body según el verbo (422)
+│   ├── excepciones/             # NoEncontradoExcepcion (el servicio la lanza → 404)
+│   └── pruebas/                 # prueba_capas.php: repositorio FALSO en memoria
+│                                #   (demuestra que las capas se desacoplan de verdad)
+├── docs/
+│   ├── spec_kit/                # LAS ESPECIFICACIONES: constitución permanente +
+│   │                            #   una carpeta de specs por versión (v1, v2, …)
+│   ├── GUIA_IA.md               # Cómo reconstruir la versión desde 0 con ayuda de una IA
+│   ├── PARADIGMA_POO.md         # Material conceptual: POO, SOLID+capas, ACID,
+│   ├── SOLID_Y_CAPAS.md         #   Docker y SDD (un .md por tema)
+│   ├── PRINCIPIOS_ACID.md       #
+│   ├── CONCEPTOS_DOCKER.md      #
+│   ├── SDD_SPECKIT.md           #
+│   ├── TUTORIAL_PHPMYADMIN.md   # Tutoriales de administración de la BD, paso a paso
+│   ├── TUTORIAL_VSCODE_SQLTOOLS.md  #   con capturas reales
+│   └── img_phpmyadmin/ img_sqltools/  # Las capturas de esos tutoriales
+│
+├── .gitignore / .gitattributes  # Higiene del repo (ignora .session.sql, normaliza EOL)
+└── README.md                    # Este archivo
+```
+
+La regla de lectura: **el sistema vive en `docker-compose.yml`**, la API
+vive en `api_facturas/` (una carpeta por capa), y **todo lo que explica**
+vive en `docs/`. Cuando lleguen las versiones siguientes, aquí aparecerán
+más carpetas de componentes (y el compose crecerá con ellas).
+
+## 3. La ruta de versiones
 
 ```
 v1  api_facturas (PHP puro): CRUD de producto, solo MariaDB   ← USTED ESTÁ AQUÍ (cerrada: tag v1)
@@ -109,7 +155,7 @@ propia spec, y una versión está TERMINADA solo cuando pasa sus criterios de
 aceptación (se cierra con tag). Detalle completo:
 **[mapa de versiones](docs/spec_kit/versiones/0_mapa_versiones.md)**.
 
-## 3. Las especificaciones de la versión actual (v1)
+## 4. Las especificaciones de la versión actual (v1)
 
 | Documento | Qué contiene |
 |---|---|
@@ -122,7 +168,7 @@ aceptación (se cierra con tag). Detalle completo:
 | [7_quickstart.md](docs/spec_kit/versiones/v1_producto_mariadb/7_quickstart.md) | Smoke test para validar lo construido |
 | [8_tasks.md](docs/spec_kit/versiones/v1_producto_mariadb/8_tasks.md) | Las fases de construcción, en orden |
 
-## 4. Material conceptual del curso
+## 5. Material conceptual del curso
 
 | Documento | Qué cubre |
 |---|---|
