@@ -209,7 +209,7 @@ REGLAS DE TRABAJO (no negociables):
 4. El código debe cumplir los contratos de 6_contracts.md al pie de la letra:
    mismos verbos, mismas rutas, mismos códigos de estado, mismos formatos de
    respuesta (incluido el contraste PUT=reemplazo completo vs PATCH=parcial,
-   y el 422 con la lista de errores del modelo).
+   y el 422 con la lista de errores de validación).
 5. Todo en español: nombres, comentarios y mensajes. PHP 8.3 con
    declare(strict_types=1) en cada archivo.
 6. Yo trabajo en Windows con un IDE (VS Code, usando su terminal integrada
