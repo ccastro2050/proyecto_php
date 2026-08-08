@@ -68,13 +68,15 @@ Solo `ensamblador.php` conoce las clases concretas.
 ```php
 interface IRepositorioProducto
 {
-    public function obtenerTodos(int $limite): array;
-    public function obtenerPorCodigo(string $codigo): ?array;
-    public function crear(array $datos): bool;
+    public function obtenerTodos(int $limite): array;      // lista de objetos Producto
+    public function obtenerPorCodigo(string $codigo): ?Producto;  // el modelo, o null
+    public function crear(Producto $producto): bool;       // recibe el modelo
     public function actualizar(string $codigo, array $datos): int;  // la usan PUT y PATCH
     public function eliminar(string $codigo): int;
 }
 ```
+Las lecturas devuelven **objetos del modelo** (`Producto`); `actualizar` va
+con array porque un PATCH puede traer solo algunos campos.
 El servicio recibe **la interfaz** por constructor. Esto es lo que compra la
 v3: un segundo motor será otra clase con `implements IRepositorioProducto`.
 

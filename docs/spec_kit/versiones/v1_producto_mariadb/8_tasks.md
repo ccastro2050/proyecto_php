@@ -36,8 +36,9 @@
 
 ## Fase 2 — Contratos (interfaces) y excepción de negocio
 - [ ] `repositorios/IRepositorioProducto.php`: interface con los 5 métodos
-      (`obtenerTodos(int $limite)`, `obtenerPorCodigo`, `crear`,
-      `actualizar` — la usan PUT y PATCH — y `eliminar`).
+      (`obtenerTodos(int $limite)`, `obtenerPorCodigo` — devuelve
+      `?Producto` —, `crear(Producto $producto)`, `actualizar` — la usan
+      PUT y PATCH — y `eliminar`). Las lecturas devuelven el MODELO.
 - [ ] `servicios/IServicioProducto.php`: interface del servicio.
 - [ ] `excepciones/NoEncontradoExcepcion.php`: la excepción que el
       controlador traducirá a 404.
@@ -48,8 +49,9 @@
 - [ ] `repositorios/RepositorioProductoMariaDB.php`: PDO perezoso
       (`ERRMODE_EXCEPTION`, `ATTR_EMULATE_PREPARES => false`), los 5 métodos
       con prepared statements de [3_plan.md](3_plan.md) §4.4, `:limite` con
-      `PDO::PARAM_INT`, y casteo al serializar (`stock → int`,
-      `valorunitario → float`).
+      `PDO::PARAM_INT`, y un método privado `armarProducto(array $fila)` que
+      convierte cada fila en objeto `Producto` casteando (`stock → int`,
+      `valorunitario → float` — el driver entrega los números como texto).
 
 **Verificar:** un script suelto que instancie el repositorio con el DSN de
 `localhost:13326` lista los 8 productos y trae PR001 por código.
