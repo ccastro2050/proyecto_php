@@ -85,7 +85,8 @@ para ver cómo se llegó a lo que existe. Su trabajo de reconstrucción va en un
    mkdir specs\versiones\v1_producto_mariadb, db, api_facturas\modelos, api_facturas\controladores, api_facturas\servicios, api_facturas\repositorios, api_facturas\excepciones, api_facturas\pruebas
    ```
 
-4. **Cree los ARCHIVOS VACÍOS** (la IA los irá llenando uno a uno):
+4. **Cree los ARCHIVOS VACÍOS** — **USTED los irá llenando** uno a uno,
+   pegando en cada archivo el código que la IA le entregue:
 
    ```powershell
    New-Item docker-compose.yml, api_facturas\Dockerfile, api_facturas\index.php, api_facturas\modelos\Producto.php, api_facturas\controladores\ControladorProducto.php, api_facturas\servicios\IServicioProducto.php, api_facturas\servicios\ServicioProducto.php, api_facturas\servicios\ensamblador.php, api_facturas\repositorios\IRepositorioProducto.php, api_facturas\repositorios\RepositorioProductoMariaDB.php, api_facturas\excepciones\NoEncontradoExcepcion.php, api_facturas\pruebas\prueba_capas.php
@@ -122,7 +123,8 @@ existir, `specs\versiones\v1_producto_mariadb\` debe tener **7 archivos**
 Si algo está vacío, falta el paso 5.
 
 La estructura queda lista ANTES de hablar con la IA (es la de `3_plan.md`
-§2); al lado, la fase en que la IA le dictará cada contenido:
+§2); al lado, la fase en la que la IA le entregará el código de cada
+archivo para que USTED lo pegue:
 
 ```
 mi_v1_producto/                   ← SU carpeta
