@@ -68,6 +68,8 @@ Cada tropiezo real del piloto se convirtió en un cambio de la guía:
 | Los modos del chat no estaban documentados | A.3: activar razonamiento (Pensamiento Profundo), apagar búsqueda web, verificar los 8 adjuntos |
 | Quedarse varado en un error de fase mata el avance | Método nuevo: "pegue primero, ejecute cuando quiera"; las verificaciones de fase son opcionales; el punto de control real es el smoke test final |
 | Choque de puertos entre el clon y el proyecto propio | Regla del prompt: el proyecto del estudiante publica los puertos con **+100** (API `8122:8022`, MariaDB `13426:3306`) y ambos conviven |
+| Texto del chat pegado en la terminal (lluvia de errores "no se reconoce como cmdlet") | Advertencia en A.2: al chat texto, a la terminal SOLO comandos |
+| Compose confundió el proyecto propio con el clon (misma carpeta `proyecto_php` → mismos contenedores: se los "secuestró" al clon y reutilizó su volumen) | Regla del prompt: el compose del estudiante declara `name: mi_v1_producto` — proyecto Compose propio, con contenedores y volúmenes propios |
 
 ## 4. Estado y pendientes
 

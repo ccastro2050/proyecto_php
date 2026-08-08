@@ -238,12 +238,17 @@ REGLAS DE TRABAJO (no negociables):
 7. La base de datos YA VIENE DADA en db/init.sql — se monta tal cual en el
    compose; no escribas ni modifiques SQL de creación de tablas.
 8. En mi máquina TAMBIÉN corre el proyecto clonado del curso con sus
-   puertos originales. Para que ambos convivan, MI proyecto publica los
-   puertos del host con +100: en el docker-compose.yml la API va
-   "8122:8022" y MariaDB va "13426:3306" (adentro de los contenedores todo
-   queda igual que en los documentos). El DSN por defecto del ensamblador
-   (para correr sin Docker) apunta a localhost:13426. Cuando me des URLs o
-   comandos de prueba, usa localhost:8122 (API) y localhost:13426 (BD).
+   puertos originales. Para que ambos convivan, MI proyecto:
+   a. Publica los puertos del host con +100: en el docker-compose.yml la
+      API va "8122:8022" y MariaDB va "13426:3306" (adentro de los
+      contenedores todo queda igual que en los documentos).
+   b. El docker-compose.yml empieza con la línea `name: mi_v1_producto`
+      (antes de services:) — así Docker lo trata como un proyecto
+      distinto al del curso, con sus propios contenedores y volúmenes,
+      aunque las carpetas se llamen parecido.
+   El DSN por defecto del ensamblador (para correr sin Docker) apunta a
+   localhost:13426. Cuando me des URLs o comandos de prueba, usa
+   localhost:8122 (API) y localhost:13426 (BD).
 
 Al final, la versión 1 está TERMINADA solo cuando pasan los 6 criterios de
 aceptación de 2_spec.md, verificados con el smoke test de 7_quickstart.md.
