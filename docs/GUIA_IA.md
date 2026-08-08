@@ -15,7 +15,7 @@
 |---|---|---|
 | Herramientas | Gemini, DeepSeek, ChatGPT, Claude (web) | Antigravity, Cursor, Claude Code, Copilot agente |
 | ¿Cómo conoce la spec? | Usted le **sube los 8 archivos** | El agente **lee la carpeta `specs/` de su proyecto** |
-| ¿Quién crea la estructura de carpetas? | **USTED la crea a mano** en su proyecto — el chat no puede tocar su disco (la estructura exacta y el comando están en A.3) | El agente crea carpetas y archivos solo |
+| ¿Quién crea la estructura de carpetas? | **USTED la crea a mano** en su proyecto — el chat no puede tocar su disco (los dos comandos, carpetas y archivos vacíos, están en A.2) | El agente crea carpetas y archivos solo |
 | ¿Quién escribe los archivos? | Usted copia/pega lo que la IA propone | El agente crea y edita los archivos directamente |
 | ¿Quién ejecuta los comandos? | Usted, en un IDE (**preferible**: la terminal integrada de VS Code) o en PowerShell, y pega la salida | El agente (pidiéndole permiso); usted revisa la salida |
 | Su papel | Operador: ejecutar y reportar | Supervisor: revisar diffs y aprobar |
@@ -56,7 +56,7 @@ de cada uno en el mismo orden):
 Además de los 8 documentos, la versión trae **un artefacto que NO se sube al
 chat ni lo genera la IA**: `db/init.sql` (el script completo de la BD en
 dialecto MariaDB) — usted lo **copia tal cual** del repositorio a su proyecto
-(ver A.3).
+(ver A.2, paso 5).
 
 > **¿Qué es un "artefacto"?** En ingeniería de software, cualquier archivo
 > que el proceso produce o entrega (documentos, código, scripts…). Aquí lo
@@ -68,7 +68,96 @@ dialecto MariaDB) — usted lo **copia tal cual** del repositorio a su proyecto
 **No suba nada más.** El mapa de versiones no hace falta (y le revelaría a la
 IA lo que viene — la regla es que la v1 no anticipa).
 
-### A.2 El prompt (cópielo tal cual como PRIMER mensaje)
+### A.2 Prepare SU proyecto (ANTES de abrir el chat)
+
+**Ojo: NO se construye dentro de la carpeta clonada.** El repositorio clonado
+es el **material de referencia** — contiene la versión y sus especificaciones,
+para ver cómo se llegó a lo que existe. Su trabajo de reconstrucción va en un
+**proyecto propio, en una carpeta nueva y vacía**:
+
+1. Cree una carpeta para su proyecto (ej.: `mi_v1_producto/`) donde usted
+   guarda sus trabajos — fuera de la carpeta clonada.
+2. Ábrala en VS Code (*File → Open Folder*).
+3. **Cree las CARPETAS** (el chat no puede tocar su disco). En la terminal
+   integrada (*Terminal → New Terminal*, PowerShell), parado en su carpeta:
+
+   ```powershell
+   mkdir specs, db, api_facturas\modelos, api_facturas\controladores, api_facturas\servicios, api_facturas\repositorios, api_facturas\excepciones, api_facturas\pruebas
+   ```
+
+4. **Cree los ARCHIVOS VACÍOS** (la IA los irá llenando uno a uno):
+
+   ```powershell
+   New-Item docker-compose.yml, api_facturas\Dockerfile, api_facturas\index.php, api_facturas\modelos\Producto.php, api_facturas\controladores\ControladorProducto.php, api_facturas\servicios\IServicioProducto.php, api_facturas\servicios\ServicioProducto.php, api_facturas\servicios\ensamblador.php, api_facturas\repositorios\IRepositorioProducto.php, api_facturas\repositorios\RepositorioProductoMariaDB.php, api_facturas\excepciones\NoEncontradoExcepcion.php, api_facturas\pruebas\prueba_capas.php
+   ```
+
+   (`db/init.sql` NO está en la lista a propósito: ese no nace vacío — se
+   copia del repositorio en el paso 5.)
+
+5. Copie dentro: los 8 documentos de la tabla A.1 en la subcarpeta `specs/`,
+   y el script `db/init.sql` del repositorio en `db\init.sql` (la BD completa
+   viene dada — la IA no debe generarla).
+
+La estructura queda lista ANTES de hablar con la IA (es la de `3_plan.md`
+§2); al lado, la fase en que la IA le dictará cada contenido:
+
+```
+mi_v1_producto/                   ← SU carpeta
+├── specs/                        ← copia de los 8 documentos (solo lectura)
+├── docker-compose.yml            ← Fase 0 (servicio mariadb) y Fase 6 (servicio api-facturas)
+├── db/
+│   └── init.sql                  ← Fase 0: COPIADO del repo (la BD completa; no la genera la IA)
+└── api_facturas/                 ← TODO el código va aquí adentro
+    ├── Dockerfile                ← Fase 6 (para el "un solo comando" final)
+    ├── index.php                 ← Fase 5 (el front controller)
+    ├── modelos/
+    │   └── Producto.php               ← Fase 1
+    ├── controladores/
+    │   └── ControladorProducto.php    ← Fase 5
+    ├── servicios/
+    │   ├── IServicioProducto.php      ← Fase 2
+    │   ├── ServicioProducto.php       ← Fase 4
+    │   └── ensamblador.php            ← Fase 4
+    ├── repositorios/
+    │   ├── IRepositorioProducto.php   ← Fase 2
+    │   └── RepositorioProductoMariaDB.php  ← Fase 3
+    ├── excepciones/
+    │   └── NoEncontradoExcepcion.php  ← Fase 2
+    └── pruebas/
+        └── prueba_capas.php           ← Fase 4 (criterio 6)
+```
+
+**Cómo pegar lo que la IA entregue** (VS Code): el archivo **ya existe
+vacío** (lo creó el comando del paso 4) — ábralo desde el explorador, pegue
+el contenido COMPLETO que entregó la IA y guarde (`Ctrl+S`). Un bloque de la
+IA = un archivo completo (reemplaza todo, nunca "agregue al final").
+
+**Qué le entrega la IA y qué hace usted con eso** — en cada fase la IA
+entrega tres tipos de cosas:
+
+| La IA le entrega | Usted lo pone en |
+|---|---|
+| Un bloque de código con su ruta (ej.: "Archivo: `api_facturas/modelos/Producto.php`") | Ese archivo, que ya existe vacío en ESA ruta |
+| (La BD no la entrega la IA) | `db/init.sql` se **copia del repositorio** tal cual, en el paso 5 — si la IA intenta escribirle un `CREATE TABLE`, recuérdele que la BD ya viene dada |
+| Comandos (docker compose, php -l, php -S, curl) | La terminal integrada del IDE, parado en la carpeta correcta (ver abajo) |
+
+Si un bloque llega **sin ruta**, no adivine: pregúntele "¿en qué archivo va
+esto?". Y si le dice "modifica la línea X", pídale mejor el archivo completo
+actualizado — copiar archivos enteros evita errores de edición manual.
+
+**Dónde parar la terminal:** los comandos de Docker se corren desde la raíz
+(`mi_v1_producto/`); `php -S localhost:8022 index.php` y
+`php pruebas/prueba_capas.php` se corren desde `api_facturas/`:
+
+```powershell
+cd api_facturas
+php -S localhost:8022 index.php
+```
+
+> Nota: no hay venv, ni `npm install`, ni Composer — PHP puro no necesita
+> instalar dependencias. Esa simplicidad es una decisión de la constitución.
+
+### A.3 El prompt (cópielo tal cual como PRIMER mensaje)
 
 ```
 Actúa como mi asistente de programación para construir la VERSIÓN 1 de un
@@ -84,12 +173,17 @@ REGLAS DE TRABAJO (no negociables):
    falta algo, pregúntame antes.
 2. Vamos a seguir 8_tasks.md FASE POR FASE, en orden. En cada fase:
    a. Me explicas en 3-5 líneas qué vamos a hacer y por qué.
-   b. Me das el contenido COMPLETO de cada archivo de esa fase (con su ruta
-      exacta según la estructura de 3_plan.md), con los comentarios
-      didácticos en español que exige la constitución.
+   b. Me entregas los archivos de la fase DE A UNO: primero la ruta exacta
+      y el contenido COMPLETO de UN solo archivo (listo para copiar y
+      pegar, con los comentarios didácticos en español que exige la
+      constitución). Esperas mi "listo" y solo entonces me das el
+      siguiente archivo de la fase.
    c. Me dices el comando de verificación de la fase y QUÉ salida esperar.
    d. TE DETIENES y esperas a que yo ejecute y te pegue el resultado.
       No avanzas a la siguiente fase sin mi confirmación.
+   NOTA: la estructura de carpetas y los archivos vacíos YA EXISTEN en mi
+   proyecto — no me des comandos para crearlos; tu trabajo es dictarme el
+   CONTENIDO de cada archivo.
 3. Si mi resultado muestra un error, lo diagnosticamos y corregimos ANTES de
    avanzar. Nunca "sigamos y después lo arreglamos".
 4. El código debe cumplir los contratos de 6_contracts.md al pie de la letra:
@@ -109,90 +203,6 @@ aceptación de 2_spec.md, verificados con el smoke test de 7_quickstart.md.
 Empieza: resume en máximo 10 líneas qué vamos a construir (para confirmar que
 entendiste el alcance) y luego arranca con la Fase 0.
 ```
-
-### A.3 Dónde queda todo: crear SU proyecto y pegar lo que la IA entrega
-
-**Ojo: NO se construye dentro de la carpeta clonada.** El repositorio clonado
-es el **material de referencia** — contiene la versión y sus especificaciones,
-para ver cómo se llegó a lo que existe. Su trabajo de reconstrucción va en un
-**proyecto propio, en una carpeta nueva y vacía**:
-
-1. Cree una carpeta para su proyecto (ej.: `mi_v1_producto/`) donde usted
-   guarda sus trabajos — fuera de la carpeta clonada.
-2. Ábrala en VS Code (*File → Open Folder*).
-3. **Cree la estructura de carpetas** (el chat no puede crearla por usted).
-   En la terminal integrada (*Terminal → New Terminal*, PowerShell), parado
-   en su carpeta, un solo comando las crea todas:
-
-   ```powershell
-   mkdir specs, db, api_facturas\modelos, api_facturas\controladores, api_facturas\servicios, api_facturas\repositorios, api_facturas\excepciones, api_facturas\pruebas
-   ```
-
-   (También puede crearlas una a una desde el explorador de VS Code, o
-   dejar que se creen solas al guardar cada archivo con su ruta completa.)
-4. Copie dentro: los 8 documentos de la tabla A.1 en la subcarpeta `specs/`,
-   y el script `db/init.sql` del repositorio en `db/init.sql` (la BD completa
-   viene dada — la IA no debe generarla).
-
-La estructura final que usted irá llenando en SU carpeta (es la de
-`3_plan.md` §2):
-
-```
-mi_v1_producto/                   ← SU carpeta (nueva, vacía al empezar)
-├── specs/                        ← copia de los 8 documentos (solo lectura)
-├── docker-compose.yml            ← Fase 0 (servicio mariadb) y Fase 6 (servicio api-facturas)
-├── db/
-│   └── init.sql                  ← Fase 0: COPIADO del repo (la BD completa; no la genera la IA)
-└── api_facturas/                 ← TODO el código va aquí adentro
-    ├── Dockerfile                ← Fase 6 (para el "un solo comando" final)
-    ├── index.php                 ← Fase 5 (el front controller)
-    ├── modelos/
-    │   └── Producto.php ← Fase 1
-    ├── controladores/
-    │   └── ControladorProducto.php    ← Fase 5
-    ├── servicios/
-    │   ├── IServicioProducto.php      ← Fase 2
-    │   ├── ServicioProducto.php       ← Fase 4
-    │   └── ensamblador.php            ← Fase 4
-    ├── repositorios/
-    │   ├── IRepositorioProducto.php   ← Fase 2
-    │   └── RepositorioProductoMariaDB.php  ← Fase 3
-    ├── excepciones/
-    │   └── NoEncontradoExcepcion.php  ← Fase 2
-    └── pruebas/
-        └── prueba_capas.php           ← Fase 4 (criterio 6)
-```
-
-**Cómo crear un archivo donde la IA diga** (VS Code): en el explorador
-(panel izquierdo), clic en el ícono *New File* y escriba la **ruta completa**,
-por ejemplo `api_facturas/modelos/Producto.php` — VS Code crea las
-carpetas intermedias solas. Pegue el contenido que entregó la IA y guarde
-(`Ctrl+S`).
-
-**Qué le entrega la IA y qué hace usted con eso** — en cada fase la IA
-entrega tres tipos de cosas:
-
-| La IA le entrega | Usted lo pone en |
-|---|---|
-| Un bloque de código con su ruta (ej.: "Archivo: `api_facturas/modelos/Producto.php`") | Ese archivo, en ESA ruta exacta — un bloque = un archivo completo (reemplaza todo el contenido, no "agregue al final") |
-| (La BD no la entrega la IA) | `db/init.sql` se **copia del repositorio** tal cual, en la Fase 0 — si la IA intenta escribirle un `CREATE TABLE`, recuérdele que la BD ya viene dada |
-| Comandos (docker compose, php -l, php -S, curl) | La terminal integrada del IDE, parado en la carpeta correcta (ver abajo) |
-
-Si un bloque llega **sin ruta**, no adivine: pregúntele "¿en qué archivo va
-esto?". Y si le dice "modifica la línea X", pídale mejor el archivo completo
-actualizado — copiar archivos enteros evita errores de edición manual.
-
-**Dónde parar la terminal:** los comandos de Docker se corren desde la raíz
-(`mi_v1_producto/`); `php -S localhost:8022 index.php` y
-`php pruebas/prueba_capas.php` se corren desde `api_facturas/`:
-
-```powershell
-cd api_facturas
-php -S localhost:8022 index.php
-```
-
-> Nota: no hay venv, ni `npm install`, ni Composer — PHP puro no necesita
-> instalar dependencias. Esa simplicidad es una decisión de la constitución.
 
 ### A.4 El método de la conversación
 
