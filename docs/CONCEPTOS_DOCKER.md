@@ -150,6 +150,31 @@ Las tres ideas que este archivo demuestra:
    así que guardar y refrescar ES el ciclo. Solo se reconstruye (`--build`)
    cuando cambia el Dockerfile.
 
+### Contenedores huérfanos y `--remove-orphans`
+
+Compose recuerda qué contenedores creó para este proyecto (los marca con el
+nombre de la carpeta: `proyecto_php-...`). Si el `docker-compose.yml` **deja
+de declarar** un servicio que antes existía, su contenedor no se borra solo:
+queda **huérfano** — creado por el proyecto, pero ya sin servicio que lo
+respalde — y Compose lo avisa al arrancar:
+
+```
+Found orphan containers ([proyecto_php-phpmyadmin-1 ...]) for this project.
+```
+
+En este repositorio puede pasar porque el curso es **por versiones**: si una
+versión futura elimina o renombra un servicio del compose (o si usted agregó
+uno de prueba y luego lo quitó del archivo), el contenedor viejo queda ahí.
+No estorba para trabajar (está detenido), pero ocupa disco y ensucia
+`docker ps -a`. La limpieza:
+
+```powershell
+docker compose up -d --remove-orphans   # levanta lo declarado Y borra los huérfanos
+```
+
+Importante: borra los **contenedores** sobrantes, no los **volúmenes** — los
+datos de la BD siguen ahí (sección 4).
+
 ## 6. Kubernetes (y por qué este curso NO lo necesita)
 
 Kubernetes (K8s) es el orquestador de contenedores **a escala de clúster**:
@@ -189,6 +214,7 @@ docker compose up -d --build     # materializar el docker-compose.yml (con rebui
 docker compose ps                # estado de los servicios del compose
 docker compose logs api-facturas # la salida de un servicio (errores incluidos)
 docker compose down [-v]         # apagar todo (-v: borrar también los volúmenes)
+docker compose up -d --remove-orphans  # además, borrar contenedores huérfanos (sección 5)
 ```
 
 ## 8. Referencias
