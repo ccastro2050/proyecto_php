@@ -10,30 +10,87 @@
 
 Organizar el sistema en **niveles con responsabilidades distintas**, donde
 cada capa solo conoce a la inmediatamente inferior y siempre a través de un
-contrato:
+contrato. Así se ve el **viaje de UNA petición** por dentro de la API — el
+"diagrama de palitos" del curso:
 
 ```
-DENTRO DE LA API (desde la v1):          EL SISTEMA COMPLETO (meta, v6):
-┌────────────────────────┐               ┌─────────────────────────┐
-│ CONTROLADOR (HTTP)     │               │ CAPA 1: FRONT (v6)      │
-│  no toca SQL           │               │  solo pinta y llama APIs│
-├────────────────────────┤               ├─────────────────────────┤
-│ SERVICIO    (negocio)  │               │ CAPA 2: APIs (v1…v5)    │
-│  no conoce HTTP        │               │  solo JSON              │
-│  ni el motor           │               ├─────────────────────────┤
-├────────────────────────┤               │ CAPA 3: DATOS (v1…)     │
-│ REPOSITORIO (SQL)      │               │  MariaDB → +PostgreSQL  │
-│  no conoce HTTP        │               │  → +SQL Server          │
-└────────────────────────┘               └─────────────────────────┘
+            EL CLIENTE (navegador, Postman, curl)
+                 │
+                 │  ① GET /api/producto/PR001
+                 ▼
+┌─────────────────────────────────────────────────────┐
+│ CAPA 1 — CONTROLADOR (HTTP)                         │
+│ controladores/ControladorProducto.php               │
+│ Recibe la petición, valida la ENTRADA y traduce el  │
+│ resultado a códigos HTTP y JSON. NO tiene negocio.  │
+│ NO tiene SQL.                                       │
+└────────────────┬────────────────────────────────────┘
+                 │  ② $servicio->obtenerPorCodigo("PR001")
+                 ▼
+┌─────────────────────────────────────────────────────┐
+│ CAPA 2 — SERVICIO (negocio)                         │
+│ servicios/ServicioProducto.php                      │
+│ Las reglas del dominio: qué se puede y qué no (el   │
+│ 404 "no existe" NACE aquí). NO conoce HTTP.         │
+│ NO sabe qué motor hay debajo.                       │
+└────────────────┬────────────────────────────────────┘
+                 │  ③ $repositorio->obtenerPorCodigo("PR001")
+                 │     — a través de la INTERFAZ IRepositorioProducto
+                 ▼
+┌─────────────────────────────────────────────────────┐
+│ CAPA 3 — REPOSITORIO (datos)                        │
+│ repositorios/RepositorioProductoMariaDB.php         │
+│ El SQL con PDO: traduce filas ↔ objetos Producto.   │
+│ NO conoce HTTP. NO decide negocio.                  │
+└────────────────┬────────────────────────────────────┘
+                 │  ④ SELECT … FROM producto WHERE codigo = :codigo
+                 ▼
+          ┌───────────────┐
+          │ BASE DE DATOS │  MariaDB — bdfacturas
+          └───────┬───────┘
+                  │
+   y la respuesta hace el viaje DE VUELTA:
+   fila → objeto Producto (repositorio) → objeto (servicio)
+        → JSON + 200 (controlador) → cliente
 ```
+
+Qué hace — y qué tiene PROHIBIDO — cada capa:
+
+| Capa | Su trabajo | Prohibido para ella | En la v1 |
+|---|---|---|---|
+| **Controlador** | HTTP: validar el body, códigos de estado, JSON | SQL y reglas de negocio | `controladores/ControladorProducto.php` |
+| **Servicio** | Las reglas del negocio (¿existe? ¿se puede?) | Saber de HTTP o del motor de BD | `servicios/ServicioProducto.php` |
+| **Repositorio** | El SQL y el mapeo fila ↔ objeto | Saber de HTTP o decidir negocio | `repositorios/RepositorioProductoMariaDB.php` |
 
 **La regla de oro:** las dependencias apuntan en una sola dirección y cruzan
 por **interfaces**. El controlador conoce al servicio; el servicio conoce la
-interfaz del repositorio; **nadie** conoce dos capas hacia abajo.
+interfaz del repositorio; **nadie** conoce dos capas hacia abajo (el
+controlador no sabe que existe MariaDB).
+
+**El mismo viaje cuando algo sale mal** — `GET /api/producto/PR999`:
+
+1. El **repositorio** no encuentra la fila y devuelve `null` — un HECHO,
+   sin opinión.
+2. El **servicio** decide qué significa ese hecho: "ese producto no
+   existe" — y lo dice lanzando `NoEncontradoExcepcion` (una DECISIÓN de
+   negocio).
+3. El **controlador** captura la excepción y la traduce al idioma HTTP:
+   **404** con su JSON.
+
+Cada capa aportó exactamente lo suyo: datos → hecho, negocio → decisión,
+HTTP → código de estado.
 
 **Justificación:** cada capa se puede cambiar, probar o reemplazar sin tocar
 las otras. La prueba viva es el criterio 6 de la v1: el servicio se prueba con
 un repositorio falso (`pruebas/prueba_capas.php`), sin base de datos.
+
+Y el SISTEMA COMPLETO (la meta, v6) repite el patrón a lo grande:
+
+```
+CAPA 1: FRONT (v6)      → solo pinta y llama APIs
+CAPA 2: APIs (v1…v5)    → solo JSON
+CAPA 3: DATOS (v1…)     → MariaDB → +PostgreSQL → +SQL Server
+```
 
 ## 2. Los cinco principios SOLID
 
@@ -49,6 +106,21 @@ las reglas de negocio; el repositorio si cambia el SQL; el modelo si
 cambian las reglas de forma. Cuatro archivos, cuatro razones de cambio, cero
 mezcla.
 
+```php
+// ❌ Sin S: un index.php que hace TODO (HTTP + negocio + SQL revueltos)
+if ($ruta === '/api/producto' && $metodo === 'GET') {
+    $pdo = new PDO(...);                          // SQL aquí = mezcla
+    $filas = $pdo->query('SELECT ...');
+    if (!$filas) { http_response_code(404); }     // negocio aquí = mezcla
+}
+
+// ✅ Con S (la v1): un archivo por razón de cambio
+//   controladores/  → cambia solo si cambia el HTTP
+//   servicios/      → cambia solo si cambian las reglas
+//   repositorios/   → cambia solo si cambia el SQL
+//   modelos/        → cambia solo si cambia la forma del dato
+```
+
 ### O — Abierto/Cerrado (*Open/Closed*)
 > Abierto a extensión, cerrado a modificación: agregar sin romper lo que hay.
 
@@ -57,6 +129,16 @@ mezcla.
 ensamblador — controladores y servicios no se tocan. Si en la v3 hay que
 modificar el servicio, el diseño de la v1 estuvo mal (por eso la v1 deja las
 interfaces listas).
+
+```php
+// La v3 AGREGARÁ sin modificar: una clase nueva con la misma interfaz...
+class RepositorioProductoPostgreSQL implements IRepositorioProducto { /* … */ }
+
+// ...y el ensamblador (ÚNICO archivo tocado) elegirá el motor:
+$repositorio = $motor === 'postgres'
+    ? new RepositorioProductoPostgreSQL($dsn, $usuario, $clave)
+    : new RepositorioProductoMariaDB($dsn, $usuario, $clave);
+```
 
 ### L — Sustitución de Liskov (*Liskov Substitution*)
 > Donde sirve el tipo base, debe servir CUALQUIER implementación, sin sorpresas.
@@ -67,6 +149,21 @@ prueba de capas funciona. En v3/v4, los repositorios de cada motor deben
 mantener esa indistinguibilidad: mismos métodos, misma semántica, mismos
 resultados.
 
+```php
+// El repositorio FALSO de la prueba (criterio 6): sin BD, misma interfaz
+class RepositorioFalsoEnMemoria implements IRepositorioProducto
+{
+    public function obtenerPorCodigo(string $codigo): ?Producto
+    {
+        return $this->datos[$codigo] ?? null;   // un array en memoria
+    }
+    // ...los otros 4 métodos...
+}
+
+$servicio = new ServicioProducto(new RepositorioFalsoEnMemoria());
+// ← y el servicio NI SE ENTERA de que no hay MariaDB
+```
+
 ### I — Segregación de Interfaces (*Interface Segregation*)
 > Muchas interfaces pequeñas y específicas, no una gigante que obligue a
 > implementar lo que no se usa.
@@ -74,6 +171,21 @@ resultados.
 **En la v1:** `IRepositorioProducto` tiene exactamente los 5 métodos del CRUD
 de producto — no un `IRepositorioUniversal` con 40 métodos. Cuando la v2
 agregue persona, tendrá SU interfaz.
+
+```php
+// ✅ La interfaz de la v1: SOLO los 5 métodos del CRUD de producto
+interface IRepositorioProducto
+{
+    public function obtenerTodos(int $limite): array;
+    public function obtenerPorCodigo(string $codigo): ?Producto;
+    public function crear(Producto $producto): bool;
+    public function actualizar(string $codigo, array $datos): int;
+    public function eliminar(string $codigo): int;
+}
+
+// ❌ El anti-ejemplo: un IRepositorioUniversal de 40 métodos donde cada
+//    clase queda llena de cuerpos vacíos que PHP la obliga a escribir.
+```
 
 ### D — Inversión de Dependencias (*Dependency Inversion*)
 > Depender de abstracciones, no de implementaciones concretas.
