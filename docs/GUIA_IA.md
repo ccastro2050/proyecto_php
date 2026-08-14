@@ -89,7 +89,7 @@ para ver cómo se llegó a lo que existe. Su trabajo de reconstrucción va en un
    pegando en cada archivo el código que la IA le entregue:
 
    ```powershell
-   New-Item docker-compose.yml, api_facturas\Dockerfile, api_facturas\index.php, api_facturas\modelos\Producto.php, api_facturas\controladores\ControladorProducto.php, api_facturas\servicios\IServicioProducto.php, api_facturas\servicios\ServicioProducto.php, api_facturas\servicios\ensamblador.php, api_facturas\repositorios\IRepositorioProducto.php, api_facturas\repositorios\RepositorioProductoMariaDB.php, api_facturas\excepciones\NoEncontradoExcepcion.php, api_facturas\pruebas\prueba_capas.php
+   New-Item .gitignore, docker-compose.yml, api_facturas\Dockerfile, api_facturas\index.php, api_facturas\modelos\Producto.php, api_facturas\controladores\ControladorProducto.php, api_facturas\servicios\IServicioProducto.php, api_facturas\servicios\ServicioProducto.php, api_facturas\servicios\ensamblador.php, api_facturas\repositorios\IRepositorioProducto.php, api_facturas\repositorios\RepositorioProductoMariaDB.php, api_facturas\excepciones\NoEncontradoExcepcion.php, api_facturas\pruebas\prueba_capas.php
    ```
 
    (`db/init.sql` NO está en la lista a propósito: ese no nace vacío — se
@@ -110,7 +110,7 @@ para ver cómo se llegó a lo que existe. Su trabajo de reconstrucción va en un
 
 **Antes de abrir el chat, verifique:** `docs\spec_kit\1_constitution.md` debe
 existir, `docs\spec_kit\versiones\v1_producto_mariadb\` debe tener **7 archivos**
-(2_spec a 8_tasks) y `db\init.sql` debe tener contenido (~1.100 líneas).
+(2_spec a 8_tasks) y `db\init.sql` debe tener contenido (~1.300 líneas).
 Si algo está vacío, falta el paso 5.
 
 La estructura queda lista ANTES de hablar con la IA (es la de `3_plan.md`
@@ -125,6 +125,7 @@ mi_v1_producto/                   ← SU carpeta
 │       └── versiones/
 │           └── v1_producto_mariadb/  ← los 7 documentos de la v1 (la v2
 │                                       tendrá su propia carpeta al lado)
+├── .gitignore                    ← Fase 6 (excluye *.session.sql y archivos de IDE)
 ├── docker-compose.yml            ← Fase 0 (servicio mariadb) y Fase 6 (servicio api-facturas)
 ├── db/
 │   └── init.sql                  ← Fase 0: COPIADO del repo (la BD completa; no la genera la IA)
@@ -202,6 +203,11 @@ proyecto universitario, partiendo de cero. Te adjunto 8 documentos: una
 constitución (reglas permanentes) y el spec kit de la versión 1 (spec, plan,
 research con las decisiones, modelo de datos, contratos, quickstart y tareas).
 
+El proyecto es PHP 8.3 puro (sin frameworks ni Composer) + MariaDB — así lo
+fija 3_plan.md. Si en tu respuesta aparece OTRO lenguaje o framework (Python,
+Java, Node, Laravel, Symfony…), significa que no leíste los documentos
+adjuntos: detente y dímelo en vez de continuar.
+
 REGLAS DE TRABAJO (no negociables):
 
 1. La especificación manda. No agregues NADA que los documentos no pidan:
@@ -276,7 +282,13 @@ entendiste el alcance) y luego arranca con la Fase 0.
    `localhost:8122`, y donde diga `13326` use `13426`.
 4. **Si la IA se acelera** y entrega varios archivos de un tirón,
    recuérdele la regla 2b: "de a uno, espera mi listo".
-5. **Si el chat pierde el contexto** (conversaciones largas): abra un chat
+5. **Si la primera respuesta llega en OTRO lenguaje** (Python, Java, Node…),
+   no corrija sobre eso: es la señal inequívoca de que la IA **no leyó los
+   adjuntos**. Cierre ese chat, verifique que los 8 documentos realmente
+   cargaron (deslice el carrusel de adjuntos) y que son los de ESTE proyecto
+   (3_plan.md debe decir PHP 8.3 + MariaDB), y empiece de nuevo con el
+   prompt tal cual.
+6. **Si el chat pierde el contexto** (conversaciones largas): abra un chat
    nuevo, vuelva a subir los 8 documentos y agregue al prompt: "Ya tengo
    construidas las fases 0 a N; te pego el código actual. Continuemos en la
    fase N+1" (y pegue sus archivos).
