@@ -137,7 +137,7 @@ proyecto_php/
 │   │                            #   una carpeta de specs por versión (v1, v2, …)
 │   ├── GUIA_IA.md               # Cómo reconstruir la versión desde 0 con ayuda de una IA
 │   ├── PARADIGMA_POO.md         # Material conceptual: POO, SOLID+capas, ACID,
-│   ├── SOLID_Y_CAPAS.md         #   Docker y SDD (un .md por tema)
+│   ├── SOLID_CAPAS_PATRONES.md         #   Docker y SDD (un .md por tema)
 │   ├── PRINCIPIOS_ACID.md       #
 │   ├── CONCEPTOS_DOCKER.md      #
 │   ├── SDD_SPECKIT.md           #
@@ -191,7 +191,7 @@ aceptación (se cierra con tag). Detalle completo:
 | [Colección de Postman](postman/README.md) | Los 13 endpoints de la v1 listos para importar y probar con clics — incluida la pareja PUT=422 vs PATCH=200 |
 | [SDD y Spec Kit](docs/SDD_SPECKIT.md) | La metodología con la que se trabaja este curso: la spec manda sobre el código |
 | [El paradigma P.O.O. en PHP](docs/PARADIGMA_POO.md) | Qué es un paradigma, los 4 pilares, y las `interface` de PHP + la validación como frontera |
-| [SOLID y programación por capas](docs/SOLID_Y_CAPAS.md) | Los 5 principios y las capas — y en qué versión se demuestra cada uno |
+| [SOLID, capas y patrones de diseño](docs/SOLID_CAPAS_PATRONES.md) | Los 5 principios y las capas — y en qué versión se demuestra cada uno |
 | [Principios ACID](docs/PRINCIPIOS_ACID.md) | Las 4 garantías transaccionales, por qué una facturación las exige, y el contraste con BASE |
 | [Conceptos de Docker](docs/CONCEPTOS_DOCKER.md) | Imagen, contenedor, volumen, compose (con el `docker-compose.yml` del proyecto explicado línea por línea) y por qué NO se necesita Kubernetes |
 | [Tutorial phpMyAdmin](docs/TUTORIAL_PHPMYADMIN.md) | Administrar bdfacturas desde el navegador: estructura, Diseñador, SQL, edición y respaldo — paso a paso con capturas |

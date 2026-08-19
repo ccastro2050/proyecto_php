@@ -1,8 +1,8 @@
-# SOLID y programación por capas
+# SOLID, programación por capas y patrones de diseño
 
-> Documento conceptual del curso. Los cinco principios SOLID y la arquitectura
-> por capas: qué son, por qué importan, y dónde se ven (o se verán) en cada
-> versión del proyecto.
+> Documento conceptual del curso. Los cinco principios SOLID, la arquitectura
+> por capas y los patrones de diseño que este código usa: qué son, por qué
+> importan, y dónde se ven (o se verán) en cada versión del proyecto.
 
 ---
 
@@ -234,7 +234,89 @@ function crearServicioProducto(): IServicioProducto
 
 Unas pocas líneas que compran, sin costo extra hoy, toda la ruta v3–v4.
 
-## 5. Referencias
+## 5. Patrones de diseño (los que trabajan en este proyecto)
+
+**¿Qué es un patrón de diseño?** Una solución **con nombre**, probada y
+reutilizable, para un problema de diseño que aparece una y otra vez. No es
+código para copiar y pegar: es la FORMA de una solución — qué clases y qué
+interfaces participan, y quién conoce a quién — que cada proyecto escribe
+en su propio código. El catálogo clásico es el del "Gang of Four" (GoF,
+1994): 23 patrones en tres familias — **creacionales** (cómo se construyen
+los objetos), **estructurales** (cómo se componen) y **de comportamiento**
+(cómo colaboran). Otros, como Repositorio y DTO, vienen del catálogo de
+arquitectura empresarial de Fowler (PoEAA, 2002).
+
+La relación con lo anterior: **SOLID dice qué cualidades debe tener el
+diseño; los patrones son recetas concretas que las consiguen; las capas
+son el plano general donde unos y otras viven.** Y el nombre importa:
+decir "esto es una fábrica abstracta" comunica un diseño completo en tres
+palabras.
+
+Los que trabajan en este código:
+
+| Patrón | Familia | Dónde vive aquí |
+|---|---|---|
+| **Controlador frontal** (Front Controller) | arquitectónico (PoEAA) | `index.php`: TODAS las peticiones entran por un solo punto que enruta |
+| **Repositorio** (Repository) | arquitectónico (PoEAA) | `repositorios/`: todo el acceso a datos (PDO) detrás de una interfaz |
+| **Inyección de dependencias** | creacional (IoC) | los constructores + el ensamblador |
+| **Fábrica** (Factory) | creacional (GoF) | hoy proto-fábrica; se vuelve fábrica real cuando lleguen más motores (v3 del mapa) |
+| **Estrategia** (Strategy) | comportamiento (GoF) | implícito: implementaciones intercambiables tras cada interfaz |
+
+### Controlador frontal — una sola puerta de entrada
+
+```php
+// index.php: el servidor manda TODA petición aquí; este archivo enruta
+// hacia el controlador que corresponda. Nadie más conoce las URLs.
+match (true) {
+    $ruta === '/api/producto' && $metodo === 'GET' => $controlador->listar(),
+    // …
+};
+```
+
+### Repositorio — el negocio pide datos a un contrato, no a un motor
+
+```php
+// El contrato (repositorios/IRepositorioProducto.php):
+public function obtenerPorCodigo(string $codigo): ?Producto;
+
+// ServicioProducto lo usa SIN saber si detrás hay MariaDB o un array
+// en memoria (pruebas/prueba_capas.php).
+```
+
+### Inyección de dependencias — nadie construye lo que necesita
+
+```php
+class ServicioProducto implements IServicioProducto
+{
+    public function __construct(
+        private readonly IRepositorioProducto $repositorio,  // ← llega armado
+    ) {
+    }
+}
+```
+
+### Fábrica — UNA decisión de motor, en un solo lugar
+
+```php
+// La proto-fábrica de la v1 (el ensamblador) se convertirá en fábrica
+// real cuando lleguen más motores (v3 del mapa):
+function crearRepositorioProducto(string $motor): IRepositorioProducto
+{
+    return $motor === 'postgres'
+        ? new RepositorioProductoPostgreSQL($dsnPg, $usuario, $clave)
+        : new RepositorioProductoMariaDB($dsnMaria, $usuario, $clave);
+}
+// Agregar un motor = UNA clase nueva y UNA rama aquí — nada más se toca.
+```
+
+### Estrategia — el patrón que va de regalo
+
+La pareja "interfaz + implementaciones intercambiables"
+(`RepositorioProductoMariaDB`, `RepositorioFalsoEnMemoria` — y los motores
+que vengan) es la esencia de Strategy: quien usa la interfaz jamás
+pregunta cuál implementación le tocó.
+
+## 6. Referencias
 
 1. Robert C. Martin — *Design Principles and Design Patterns* (el artículo
    original de los principios, 2000):
@@ -245,7 +327,11 @@ Unas pocas líneas que compran, sin costo extra hoy, toda la ruta v3–v4.
    <https://martinfowler.com/bliki/PresentationDomainDataLayering.html>
 4. PHP — interfaces de objetos:
    <https://www.php.net/manual/es/language.oop5.interfaces.php>
-5. En este repositorio: el [plan de la v1](spec_kit/versiones/v1_producto_mariadb/3_plan.md)
+5. Gamma, Helm, Johnson y Vlissides — *Design Patterns* (GoF, 1994): el
+   catálogo original de los 23 patrones.
+6. Martin Fowler — *Patterns of Enterprise Application Architecture*
+   (PoEAA, 2002): Repositorio, DTO, Front Controller y compañía.
+7. En este repositorio: el [plan de la v1](spec_kit/versiones/v1_producto_mariadb/3_plan.md)
    (§3 capas, §4.1 interfaces, §4.3 la proto-fábrica) y el
    [mapa de versiones](spec_kit/versiones/0_mapa_versiones.md) (dónde entra
    cada principio).
